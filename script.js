@@ -1,1888 +1,1674 @@
 /* =========================================================
    GSTIER VN
-   BLACK / RED
-   TIERLIST STYLE
+   SCRIPT.JS
+   SUPABASE + RANKING + PROFILE + ADMIN
 ========================================================= */
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+const SUPABASE_URL = "https://sibttxgvndumphuryxwc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_5TyrZwFYdY-AgykyuopXpA_GGKNZ4O8";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const MODES = [
+    {
+        key: "sword",
+        name: "Sword",
+        icon: "⚔️"
+    },
+    {
+        key: "cpvp",
+        name: "CPvP",
+        icon: "💥"
+    },
+    {
+        key: "uhc",
+        name: "UHC",
+        icon: "❤️"
+    },
+    {
+        key: "mace",
+        name: "Mace",
+        icon: "🔨"
+    },
+    {
+        key: "netherpot",
+        name: "NetherPot",
+        icon: "🧪"
+    },
+    {
+        key: "smp",
+        name: "SMP",
+        icon: "🌍"
+    },
+    {
+        key: "axe",
+        name: "Axe",
+        icon: "🪓"
+    }
+];
+
+const TIERS = [
+    { name: "LT5", points: 10 },
+    { name: "HT5", points: 20 },
+    { name: "LT4", points: 30 },
+    { name: "HT4", points: 40 },
+    { name: "LT3", points: 50 },
+    { name: "HT3", points: 60 },
+    { name: "LT2", points: 70 },
+    { name: "HT2", points: 80 },
+    { name: "LT1", points: 90 },
+    { name: "HT1", points: 100 }
+];
+
+let players = [];
+let currentPlayer = null;
+let editingPlayerId = null;
+let currentSort = "points";
+let currentMode = "ALL";
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function $(id) {
+    return document.getElementById(id);
 }
 
 
-:root {
+function escapeHtml(value) {
+    if (value === null || value === undefined) {
+        return "";
+    }
 
-  --bg: #080607;
-  --panel: #100b0d;
-  --panel2: #150d10;
-
-  --border: #332025;
-
-  --red: #ff2448;
-  --red2: #ff0038;
-
-  --text: #f4eef0;
-  --muted: #a89da1;
-
-  --gold: #ffc83d;
-  --silver: #cbd2dc;
-  --bronze: #cd7f32;
-
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
 
-html {
-  scroll-behavior: smooth;
+function normalize(value) {
+    return String(value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 }
 
 
-body {
+function getTierPoints(tier) {
+    if (!tier) return 0;
 
-  min-height: 100vh;
-
-  background:
-    radial-gradient(
-      circle at 50% 0%,
-      rgba(255, 0, 50, .12),
-      transparent 35%
-    ),
-    linear-gradient(
-      135deg,
-      #050405,
-      #0d080a 50%,
-      #070506
+    const found = TIERS.find(
+        item => item.name.toUpperCase() === String(tier).toUpperCase()
     );
 
-  color: var(--text);
-
-  font-family:
-    "Segoe UI",
-    Arial,
-    sans-serif;
-
-  overflow-x: hidden;
-
+    return found ? found.points : 0;
 }
 
 
-/* =========================
-   BACKGROUND
-========================= */
-
-.bg-logo {
-
-  position: fixed;
-
-  top: 40%;
-
-  left: 50%;
-
-  transform:
-    translate(-50%, -50%)
-    rotate(-8deg);
-
-  font-size: 22vw;
-
-  font-weight: 1000;
-
-  color: rgba(255, 0, 50, .025);
-
-  pointer-events: none;
-
-  user-select: none;
-
-  z-index: 0;
-
+function calculateTotal(player) {
+    return MODES.reduce((total, mode) => {
+        return total + getTierPoints(player[mode.key]);
+    }, 0);
 }
 
 
-.red-glow {
+function getOverallTier(points) {
 
-  position: fixed;
+    if (points >= 650) return "HT1";
+    if (points >= 590) return "LT1";
+    if (points >= 520) return "HT2";
+    if (points >= 450) return "LT2";
+    if (points >= 380) return "HT3";
+    if (points >= 310) return "LT3";
+    if (points >= 240) return "HT4";
+    if (points >= 170) return "LT4";
+    if (points >= 100) return "HT5";
 
-  width: 500px;
-
-  height: 500px;
-
-  border-radius: 50%;
-
-  background: rgba(255, 0, 50, .08);
-
-  filter: blur(100px);
-
-  pointer-events: none;
-
-  z-index: 0;
-
+    return "LT5";
 }
 
 
-.glow-one {
+function getAvatar(player) {
 
-  top: -250px;
-  left: -200px;
+    if (player.avatar_url) {
+        return player.avatar_url;
+    }
 
+    if (player.avatar) {
+        return player.avatar;
+    }
+
+    if (player.skin_url) {
+        return player.skin_url;
+    }
+
+    return "https://mc-heads.net/avatar/" +
+        encodeURIComponent(player.name || "Steve") +
+        "/100";
 }
 
 
-.glow-two {
+function getSkin(player) {
 
-  bottom: -300px;
-  right: -200px;
+    if (player.skin_url) {
+        return player.skin_url;
+    }
 
+    if (player.skin) {
+        return player.skin;
+    }
+
+    return "https://mc-heads.net/body/" +
+        encodeURIComponent(player.name || "Steve") +
+        "/300";
 }
 
 
+/* =========================================================
+   SCREEN CONTROL
+========================================================= */
 
-/* =========================
-   HEADER
-========================= */
+function hideAllScreens() {
 
-.topbar {
+    const screens = [
+        "rankingScreen",
+        "profileScreen",
+        "adminScreen"
+    ];
 
-  position: sticky;
+    screens.forEach(id => {
 
-  top: 18px;
+        const element = $(id);
 
-  z-index: 100;
+        if (element) {
+            element.classList.add("hidden");
+        }
 
-  width: calc(100% - 70px);
-
-  max-width: 1450px;
-
-  margin: 18px auto;
-
-  min-height: 76px;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 35px;
-
-  padding: 12px 18px;
-
-  background:
-    rgba(14, 9, 11, .94);
-
-  border:
-    1px solid
-    #3b2029;
-
-  border-radius: 20px;
-
-  box-shadow:
-    0 20px 70px
-    rgba(0,0,0,.5),
-    inset 0 0 30px
-    rgba(255,0,50,.025);
-
-  backdrop-filter: blur(18px);
-
+    });
 }
 
 
-.brand {
+function showScreen(id) {
 
-  display: flex;
+    hideAllScreens();
 
-  align-items: center;
+    const element = $(id);
 
-  gap: 12px;
+    if (element) {
+        element.classList.remove("hidden");
+    }
 
-  cursor: pointer;
-
-  min-width: 190px;
-
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 }
 
 
-.brand-icon {
+/* =========================================================
+   RANKING
+========================================================= */
 
-  width: 48px;
+async function loadPlayers() {
 
-  height: 48px;
+    const list = $("rankingList");
 
-  display: grid;
+    if (list) {
+        list.innerHTML = `
+            <div class="loading">
+                Đang tải bảng xếp hạng...
+            </div>
+        `;
+    }
 
-  place-items: center;
+    const { data, error } = await supabaseClient
+        .from("players")
+        .select("*");
 
-  border-radius: 13px;
+    if (error) {
 
-  background:
-    linear-gradient(
-      135deg,
-      #ff123f,
-      #790018
+        console.error(error);
+
+        if (list) {
+            list.innerHTML = `
+                <div class="empty">
+                    Không thể tải danh sách player.<br>
+                    <small>${escapeHtml(error.message)}</small>
+                </div>
+            `;
+        }
+
+        return;
+    }
+
+    players = data || [];
+
+    renderRanking();
+    renderAdminList();
+
+    updatePlayerCount();
+}
+
+
+function updatePlayerCount() {
+
+    const countElements = document.querySelectorAll(
+        "[data-player-count]"
     );
 
-  color: white;
+    countElements.forEach(element => {
+        element.textContent = players.length;
+    });
 
-  font-weight: 1000;
+    const info = document.querySelector(".ranking-info");
 
-  font-size: 17px;
+    if (info) {
 
-  box-shadow:
-    0 0 25px
-    rgba(255,0,50,.3);
+        const small = info.querySelector("small");
 
+        if (small) {
+            small.textContent =
+                `${players.length} players ranked`;
+        }
+    }
 }
 
 
-.brand-title {
+function getFilteredPlayers() {
 
-  font-size: 20px;
+    let result = [...players];
 
-  font-weight: 1000;
+    const searchInput = $("playerSearch");
 
-  letter-spacing: 1px;
-
-}
-
-
-.brand-subtitle {
-
-  color: var(--red);
-
-  font-size: 11px;
-
-  font-weight: 800;
-
-  letter-spacing: 2px;
-
-}
-
-
-.navigation {
-
-  display: flex;
-
-  gap: 8px;
-
-  flex: 1;
-
-}
-
-
-.nav-item {
-
-  border: 1px solid transparent;
-
-  background: transparent;
-
-  color: #a99da1;
-
-  padding: 12px 17px;
-
-  border-radius: 12px;
-
-  cursor: pointer;
-
-  font-weight: 800;
-
-  letter-spacing: .5px;
-
-  transition: .2s;
-
-}
-
-
-.nav-item:hover,
-.nav-item.active {
-
-  color: white;
-
-  background:
-    rgba(255,0,50,.09);
-
-  border-color:
-    rgba(255,0,50,.25);
-
-}
-
-
-.header-actions {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-}
-
-
-.login-btn,
-.logout-btn {
-
-  border: 0;
-
-  border-radius: 12px;
-
-  padding: 13px 18px;
-
-  font-weight: 900;
-
-  cursor: pointer;
-
-}
-
-
-.login-btn {
-
-  background:
-    linear-gradient(
-      135deg,
-      #ff2850,
-      #c5002d
+    const search = normalize(
+        searchInput ? searchInput.value : ""
     );
 
-  color: white;
+    if (search) {
 
-  box-shadow:
-    0 8px 25px
-    rgba(255,0,50,.2);
+        result = result.filter(player => {
 
+            const name = normalize(player.name);
+            const region = normalize(player.region);
+
+            return (
+                name.includes(search) ||
+                region.includes(search)
+            );
+        });
+    }
+
+
+    if (currentMode !== "ALL") {
+
+        result = result.filter(player => {
+
+            const tier =
+                player[currentMode];
+
+            return tier &&
+                String(tier).trim() !== "";
+        });
+    }
+
+
+    result.sort((a, b) => {
+
+        if (currentSort === "name") {
+
+            return String(a.name || "")
+                .localeCompare(
+                    String(b.name || ""),
+                    undefined,
+                    {
+                        sensitivity: "base"
+                    }
+                );
+        }
+
+        return calculateTotal(b) -
+            calculateTotal(a);
+    });
+
+
+    return result;
 }
 
 
-.logout-btn {
+function renderRanking() {
 
-  background: #1c1013;
+    const list = $("rankingList");
 
-  color: #ff7188;
+    if (!list) return;
 
-  border: 1px solid #51222d;
+    const result = getFilteredPlayers();
 
+    if (!result.length) {
+
+        list.innerHTML = `
+            <div class="empty">
+                Không tìm thấy player.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    list.innerHTML = result.map(
+        (player, index) => {
+
+            const points =
+                calculateTotal(player);
+
+            const rank =
+                index + 1;
+
+            let rankClass = "";
+
+            if (rank === 1) {
+                rankClass = "top1";
+            } else if (rank === 2) {
+                rankClass = "top2";
+            } else if (rank === 3) {
+                rankClass = "top3";
+            }
+
+
+            const tierHtml =
+                MODES.map(mode => {
+
+                    const tier =
+                        player[mode.key] || "—";
+
+                    return `
+                        <div class="tier-item">
+
+                            <div class="tier-icon">
+                                ${mode.icon}
+                            </div>
+
+                            <div class="tier-value">
+                                ${escapeHtml(tier)}
+                            </div>
+
+                        </div>
+                    `;
+
+                }).join("");
+
+
+            return `
+                <div
+                    class="ranking-row"
+                    onclick="openProfile('${escapeHtml(player.id)}')"
+                >
+
+                    <div class="rank-number ${rankClass}">
+                        #${rank}
+                    </div>
+
+
+                    <div class="player-cell">
+
+                        <img
+                            class="avatar"
+                            src="${escapeHtml(getAvatar(player))}"
+                            alt="${escapeHtml(player.name)}"
+                            onerror="this.src='https://mc-heads.net/avatar/Steve/100'"
+                        >
+
+                        <div>
+
+                            <div class="player-name">
+                                ${escapeHtml(player.name)}
+                            </div>
+
+                            <div class="player-region">
+                                ${escapeHtml(player.region || "Unknown")}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="region-badge">
+                        ${escapeHtml(player.region || "VN")}
+                    </div>
+
+
+                    <div class="tier-list">
+                        ${tierHtml}
+                    </div>
+
+
+                    <div class="total-points">
+
+                        ${points}
+
+                        <small>
+                            POINTS
+                        </small>
+
+                    </div>
+
+                </div>
+            `;
+        }
+    ).join("");
 }
 
 
+/* =========================================================
+   SEARCH
+========================================================= */
 
-/* =========================
-   MAIN
-========================= */
-
-.main-container {
-
-  position: relative;
-
-  z-index: 2;
-
-  width: calc(100% - 100px);
-
-  max-width: 1480px;
-
-  margin: 40px auto 100px;
-
+function searchPlayers() {
+    renderRanking();
 }
 
 
-.page-card {
+/* =========================================================
+   MODE FILTER
+========================================================= */
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(22,15,17,.95),
-      rgba(12,8,10,.97)
-    );
+function changeMode(value) {
 
-  border:
-    1px solid
-    #39232a;
+    currentMode = value || "ALL";
 
-  border-radius: 24px;
-
-  padding: 28px;
-
-  box-shadow:
-    0 30px 100px
-    rgba(0,0,0,.35);
-
+    renderRanking();
 }
 
 
+/* =========================================================
+   SORT
+========================================================= */
 
-/* =========================
-   HEADINGS
-========================= */
+function changeSort(value) {
 
-.page-heading,
-.admin-heading {
+    currentSort =
+        value === "name"
+            ? "name"
+            : "points";
 
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 25px;
-
-  margin-bottom: 30px;
-
+    renderRanking();
 }
 
 
-.eyebrow {
-
-  color: #b56b78;
-
-  font-size: 12px;
-
-  font-weight: 900;
-
-  letter-spacing: 2px;
-
-  margin-bottom: 7px;
-
-}
-
-
-h1 {
-
-  font-size: 46px;
-
-  line-height: 1;
-
-  font-weight: 1000;
-
-  letter-spacing: -1px;
-
-}
-
-
-.page-heading p {
-
-  margin-top: 12px;
-
-  color: var(--muted);
-
-  font-size: 15px;
-
-}
-
-
-.ranking-info {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 12px;
-
-  padding: 12px 18px;
-
-  border: 1px solid #3b242a;
-
-  border-radius: 14px;
-
-  background: #100b0d;
-
-}
-
-
-.ranking-info > span {
-
-  font-size: 25px;
-
-}
-
-
-.ranking-info strong {
-
-  display: block;
-
-  font-size: 13px;
-
-}
-
-
-.ranking-info small {
-
-  color: #8e7e83;
-
-}
-
-
-
-/* =========================
-   CONTROLS
-========================= */
-
-.controls {
-
-  display: flex;
-
-  gap: 12px;
-
-  margin-bottom: 24px;
-
-}
-
-
-.search-wrapper {
-
-  flex: 1;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  background: #090708;
-
-  border: 1px solid #302026;
-
-  border-radius: 13px;
-
-  padding: 0 15px;
-
-}
-
-
-.search-wrapper span {
-
-  opacity: .7;
-
-}
-
-
-.search-wrapper input {
-
-  width: 100%;
-
-  height: 48px;
-
-  border: 0;
-
-  outline: 0;
-
-  background: transparent;
-
-  color: white;
-
-  font-size: 14px;
-
-}
-
-
-select {
-
-  height: 48px;
-
-  padding: 0 15px;
-
-  border-radius: 13px;
-
-  border: 1px solid #302026;
-
-  background: #0b0809;
-
-  color: #ddd4d7;
-
-  outline: none;
-
-  cursor: pointer;
-
-}
-
-
-
-/* =========================
-   TABLE HEADER
-========================= */
-
-.ranking-table-header {
-
-  display: grid;
-
-  grid-template-columns:
-    70px
-    minmax(280px, 1fr)
-    100px
-    minmax(450px, 1.3fr)
-    100px;
-
-  gap: 15px;
-
-  padding: 0 22px 12px;
-
-  color: #776a70;
-
-  font-size: 11px;
-
-  font-weight: 1000;
-
-  letter-spacing: 2px;
-
-}
-
-
-
-/* =========================
-   RANKING ROW
-========================= */
-
-.ranking-list {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 9px;
-
-}
-
-
-.ranking-row {
-
-  position: relative;
-
-  min-height: 95px;
-
-  display: grid;
-
-  grid-template-columns:
-    70px
-    minmax(280px, 1fr)
-    100px
-    minmax(450px, 1.3fr)
-    100px;
-
-  gap: 15px;
-
-  align-items: center;
-
-  padding: 10px 20px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #160d10,
-      #0e090b
-    );
-
-  border: 1px solid #302026;
-
-  border-radius: 15px;
-
-  cursor: pointer;
-
-  overflow: hidden;
-
-  transition:
-    transform .2s,
-    border .2s,
-    box-shadow .2s;
-
-}
-
-
-.ranking-row::before {
-
-  content: "";
-
-  position: absolute;
-
-  left: 0;
-
-  top: 0;
-
-  bottom: 0;
-
-  width: 3px;
-
-  background:
-    #421824;
-
-}
-
-
-.ranking-row:hover {
-
-  transform:
-    translateY(-2px);
-
-  border-color:
-    #73303e;
-
-  box-shadow:
-    0 10px 35px
-    rgba(255,0,50,.08);
-
-}
-
-
-.rank-number {
-
-  font-size: 29px;
-
-  font-weight: 1000;
-
-  color: #bdb2b6;
-
-  font-style: italic;
-
-}
-
-
-.rank-number.top1 {
-
-  color: var(--gold);
-
-}
-
-
-.rank-number.top2 {
-
-  color: var(--silver);
-
-}
-
-
-.rank-number.top3 {
-
-  color: var(--bronze);
-
-}
-
-
-
-/* =========================
-   PLAYER
-========================= */
-
-.player-cell {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 15px;
-
-  min-width: 0;
-
-}
-
-
-.avatar {
-
-  width: 64px;
-
-  height: 64px;
-
-  object-fit: contain;
-
-  border-radius: 10px;
-
-  background: #080708;
-
-  border: 1px solid #41232b;
-
-}
-
-
-.player-name {
-
-  font-size: 18px;
-
-  font-weight: 1000;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-
-}
-
-
-.player-region {
-
-  color: #85777c;
-
-  font-size: 12px;
-
-  margin-top: 5px;
-
-}
-
-
-.region-badge {
-
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  padding: 8px 12px;
-
-  min-width: 62px;
-
-  border-radius: 10px;
-
-  background:
-    #48122b;
-
-  color: #ff7190;
-
-  font-size: 12px;
-
-  font-weight: 1000;
-
-}
-
-
-
-/* =========================
-   TIER ICONS
-========================= */
-
-.tier-list {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 9px;
-
-  overflow-x: auto;
-
-}
-
-
-.tier-item {
-
-  min-width: 49px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  gap: 4px;
-
-}
-
-
-.tier-icon {
-
-  width: 43px;
-
-  height: 43px;
-
-  display: grid;
-
-  place-items: center;
-
-  border-radius: 11px;
-
-  border: 1px solid #6e303d;
-
-  background:
-    radial-gradient(
-      circle,
-      #271016,
-      #0c090a
-    );
-
-  font-size: 20px;
-
-}
-
-
-.tier-value {
-
-  min-width: 38px;
-
-  text-align: center;
-
-  padding: 3px 5px;
-
-  border-radius: 7px;
-
-  background: #31151c;
-
-  color: #e9dfe2;
-
-  font-size: 10px;
-
-  font-weight: 1000;
-
-}
-
-
-.total-points {
-
-  text-align: right;
-
-  font-size: 20px;
-
-  font-weight: 1000;
-
-  color: white;
-
-}
-
-
-.total-points small {
-
-  display: block;
-
-  color: #776970;
-
-  font-size: 9px;
-
-  letter-spacing: 1px;
-
-}
-
-
-
-/* =========================
-   ADMIN ACTIONS
-========================= */
-
-.admin-actions {
-
-  display: flex;
-
-  gap: 5px;
-
-  margin-left: auto;
-
-}
-
-
-.admin-actions button {
-
-  width: 34px;
-
-  height: 34px;
-
-  border-radius: 8px;
-
-  border: 1px solid #40232a;
-
-  background: #150b0e;
-
-  color: white;
-
-  cursor: pointer;
-
-}
-
-
-
-/* =========================
+/* =========================================================
    PROFILE
-========================= */
+========================================================= */
 
-.back-btn {
+function openProfile(playerId) {
 
-  border: 1px solid #48242d;
+    const player =
+        players.find(
+            item => String(item.id) === String(playerId)
+        );
 
-  background: #110a0c;
+    if (!player) {
+        return;
+    }
 
-  color: #d9cdd1;
+    currentPlayer = player;
 
-  padding: 12px 17px;
+    const content = $("profileContent");
 
-  border-radius: 11px;
+    if (!content) return;
 
-  cursor: pointer;
 
-  font-weight: 800;
+    const total =
+        calculateTotal(player);
 
-  margin-bottom: 20px;
+    const overall =
+        getOverallTier(total);
 
+
+    const modesHtml =
+        MODES.map(mode => {
+
+            const tier =
+                player[mode.key] || "—";
+
+            const points =
+                getTierPoints(tier);
+
+
+            return `
+                <div class="mode-card">
+
+                    <div class="mode-name">
+                        ${mode.icon}
+                        ${mode.name}
+                    </div>
+
+                    <span class="mode-tier">
+                        ${escapeHtml(tier)}
+                    </span>
+
+                    <span class="mode-points">
+                        ${points} points
+                    </span>
+
+                </div>
+            `;
+
+        }).join("");
+
+
+    content.innerHTML = `
+
+        <div class="profile-card">
+
+            <div class="profile-top">
+
+                <img
+                    class="profile-avatar"
+                    src="${escapeHtml(getAvatar(player))}"
+                    alt="${escapeHtml(player.name)}"
+                    onerror="this.src='https://mc-heads.net/avatar/Steve/200'"
+                >
+
+                <div class="profile-name">
+                    ${escapeHtml(player.name)}
+                </div>
+
+                <div class="profile-region">
+                    🌎 ${escapeHtml(player.region || "Unknown")}
+                </div>
+
+
+                <div class="profile-rank">
+
+                    OVERALL TIER
+
+                    <br>
+
+                    <strong>
+                        ${overall}
+                    </strong>
+
+                </div>
+
+
+                <div class="profile-total">
+                    ${total} total points
+                </div>
+
+            </div>
+
+
+            <div class="profile-body">
+
+                <h2>
+                    TIER RANKINGS
+                </h2>
+
+
+                <div class="profile-grid">
+                    ${modesHtml}
+                </div>
+
+
+                <div class="skin-box">
+
+                    <h2>
+                        PLAYER SKIN
+                    </h2>
+
+                    <img
+                        src="${escapeHtml(getSkin(player))}"
+                        alt="Minecraft skin"
+                        onerror="this.style.display='none'"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+
+    showScreen("profileScreen");
 }
 
 
-.back-btn:hover {
+function backToRanking() {
 
-  border-color: var(--red);
-
-  color: white;
-
+    showScreen("rankingScreen");
 }
 
 
-.profile-card {
-
-  max-width: 900px;
-
-  margin: auto;
-
-  padding: 30px;
-
-  border-radius: 20px;
-
-  border: 1px solid #43232b;
-
-  background:
-    linear-gradient(
-      180deg,
-      #150d10,
-      #0d090a
-    );
-
-  box-shadow:
-    0 30px 90px
-    rgba(0,0,0,.5);
-
-}
-
-
-.profile-top {
-
-  text-align: center;
-
-  padding-bottom: 28px;
-
-  border-bottom: 1px solid #29191e;
-
-}
-
-
-.profile-avatar {
-
-  width: 210px;
-
-  height: 210px;
-
-  object-fit: contain;
-
-  display: block;
-
-  margin: 20px auto;
-
-  filter:
-    drop-shadow(
-      0 20px 30px
-      rgba(0,0,0,.6)
-    );
-
-}
-
-
-.profile-name {
-
-  font-size: 34px;
-
-  font-weight: 1000;
-
-}
-
-
-.profile-region {
-
-  color: #ff6d86;
-
-  font-weight: 800;
-
-  margin-top: 6px;
-
-}
-
-
-.profile-rank {
-
-  margin: 22px auto 8px;
-
-  max-width: 560px;
-
-  padding: 18px;
-
-  border-radius: 13px;
-
-  border: 1px solid #67313b;
-
-  background:
-    linear-gradient(
-      90deg,
-      #3b141b,
-      #120a0c
-    );
-
-  font-size: 20px;
-
-  font-weight: 1000;
-
-}
-
-
-.profile-total {
-
-  color: #aaa0a4;
-
-  font-size: 13px;
-
-}
-
-
-.profile-body {
-
-  margin-top: 30px;
-
-}
-
-
-.profile-body h2 {
-
-  font-size: 15px;
-
-  letter-spacing: 2px;
-
-  margin-bottom: 15px;
-
-}
-
-
-.profile-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(7, 1fr);
-
-  gap: 10px;
-
-}
-
-
-.mode-card {
-
-  text-align: center;
-
-  padding: 15px 8px;
-
-  border: 1px solid #302026;
-
-  border-radius: 12px;
-
-  background: #0d090a;
-
-}
-
-
-.mode-name {
-
-  color: #9f9095;
-
-  font-size: 10px;
-
-  font-weight: 900;
-
-  margin-bottom: 9px;
-
-}
-
-
-.mode-tier {
-
-  display: block;
-
-  color: white;
-
-  font-size: 16px;
-
-  font-weight: 1000;
-
-}
-
-
-.mode-points {
-
-  display: block;
-
-  color: #ff506c;
-
-  font-size: 11px;
-
-  margin-top: 4px;
-
-}
-
-
-.skin-box {
-
-  margin-top: 25px;
-
-  padding: 20px;
-
-  border: 1px solid #302026;
-
-  border-radius: 14px;
-
-  background: #0b0809;
-
-}
-
-
-.skin-box img {
-
-  max-width: 250px;
-
-  max-height: 350px;
-
-  display: block;
-
-  margin: 20px auto;
-
-  object-fit: contain;
-
-}
-
-
-
-/* =========================
+/* =========================================================
    ADMIN
-========================= */
+========================================================= */
 
-.admin-heading {
+async function checkAdmin() {
 
-  margin-bottom: 25px;
+    const {
+        data: {
+            user
+        }
+    } = await supabaseClient.auth.getUser();
 
+
+    const adminButton =
+        $("adminNav");
+
+    const loginButton =
+        $("loginButton");
+
+    const logoutButton =
+        $("logoutButton");
+
+
+    if (!user) {
+
+        if (adminButton) {
+            adminButton.classList.add("hidden");
+        }
+
+        if (loginButton) {
+            loginButton.classList.remove("hidden");
+        }
+
+        if (logoutButton) {
+            logoutButton.classList.add("hidden");
+        }
+
+        return false;
+    }
+
+
+    const {
+        data: adminData,
+        error
+    } = await supabaseClient
+        .from("admin_users")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+
+    if (error || !adminData) {
+
+        if (adminButton) {
+            adminButton.classList.add("hidden");
+        }
+
+        if (loginButton) {
+            loginButton.classList.remove("hidden");
+        }
+
+        if (logoutButton) {
+            logoutButton.classList.add("hidden");
+        }
+
+        return false;
+    }
+
+
+    if (adminButton) {
+        adminButton.classList.remove("hidden");
+    }
+
+    if (loginButton) {
+        loginButton.classList.add("hidden");
+    }
+
+    if (logoutButton) {
+        logoutButton.classList.remove("hidden");
+    }
+
+    return true;
 }
 
 
-.admin-heading h1 span {
+/* =========================================================
+   OPEN ADMIN
+========================================================= */
 
-  color: var(--red);
+async function openAdmin() {
 
+    const isAdmin =
+        await checkAdmin();
+
+    if (!isAdmin) {
+
+        openLogin();
+
+        return;
+    }
+
+
+    showScreen("adminScreen");
+
+    renderAdminList();
 }
 
 
-.admin-card {
+/* =========================================================
+   ADMIN LIST
+========================================================= */
 
-  margin-bottom: 22px;
+function renderAdminList() {
 
-  padding: 25px;
+    const list =
+        $("adminPlayerList");
 
-  border-radius: 18px;
+    if (!list) return;
 
-  background: #110a0c;
 
-  border: 1px solid #39232a;
+    if (!players.length) {
 
+        list.innerHTML = `
+            <div class="empty">
+                Chưa có player.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    list.innerHTML =
+        players.map(player => {
+
+            return `
+                <div class="admin-player-row">
+
+                    <img
+                        class="avatar"
+                        src="${escapeHtml(getAvatar(player))}"
+                        alt=""
+                        onerror="this.src='https://mc-heads.net/avatar/Steve/70'"
+                    >
+
+                    <div class="admin-player-info">
+
+                        <strong>
+                            ${escapeHtml(player.name)}
+                        </strong>
+
+                        <small>
+                            ${escapeHtml(player.region || "VN")}
+                            •
+                            ${calculateTotal(player)} points
+                        </small>
+
+                    </div>
+
+
+                    <div class="admin-player-actions">
+
+                        <button
+                            class="edit-btn"
+                            onclick="editPlayer('${escapeHtml(player.id)}')"
+                        >
+                            ✏️ Sửa
+                        </button>
+
+                        <button
+                            class="delete-btn"
+                            onclick="deletePlayer('${escapeHtml(player.id)}')"
+                        >
+                            🗑️ Xóa
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+        }).join("");
 }
 
 
-.admin-card h2 {
+/* =========================================================
+   ADMIN FORM
+========================================================= */
 
-  margin-bottom: 22px;
+function clearAdminForm() {
 
+    editingPlayerId = null;
+
+    const fields = [
+        "playerName",
+        "playerRegion",
+        "avatarUrl",
+        "skinUrl"
+    ];
+
+    fields.forEach(id => {
+
+        const element = $(id);
+
+        if (element) {
+            element.value = "";
+        }
+
+    });
+
+
+    MODES.forEach(mode => {
+
+        const element =
+            $(`tier_${mode.key}`) ||
+            $(mode.key);
+
+        if (element) {
+            element.value = "";
+        }
+
+    });
+
+
+    const editId =
+        $("editingPlayerId");
+
+    if (editId) {
+        editId.value = "";
+    }
+
+
+    const message =
+        $("formMessage");
+
+    if (message) {
+        message.textContent = "";
+        message.className = "form-message";
+    }
 }
 
 
-.form-grid {
+function setFormValue(ids, value) {
 
-  display: grid;
+    for (const id of ids) {
 
-  grid-template-columns:
-    repeat(2, 1fr);
+        const element = $(id);
 
-  gap: 18px;
+        if (element) {
 
+            element.value =
+                value || "";
+
+            return;
+        }
+    }
 }
 
 
-.form-group {
+function editPlayer(playerId) {
 
-  display: flex;
+    const player =
+        players.find(
+            item => String(item.id) === String(playerId)
+        );
 
-  flex-direction: column;
+    if (!player) return;
 
-  gap: 7px;
 
-}
+    editingPlayerId =
+        player.id;
 
 
-.form-group label,
-.tier-input label {
-
-  font-size: 12px;
-
-  font-weight: 900;
-
-  color: #b7a9ae;
-
-}
-
-
-.form-group input,
-.form-group select,
-.tier-input select,
-.modal-box input {
-
-  width: 100%;
-
-  height: 45px;
-
-  border-radius: 9px;
-
-  border: 1px solid #38242a;
-
-  background: #090708;
-
-  color: white;
-
-  padding: 0 12px;
-
-  outline: none;
-
-}
-
-
-.form-group input:focus,
-.form-group select:focus,
-.tier-input select:focus,
-.modal-box input:focus {
-
-  border-color: var(--red);
-
-}
-
-
-.form-group small {
-
-  color: #74676c;
-
-  font-size: 10px;
-
-}
-
-
-.section-label {
-
-  margin: 25px 0 15px;
-
-  color: #ff526d;
-
-  font-size: 12px;
-
-  letter-spacing: 2px;
-
-}
-
-
-.tier-input-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, 1fr);
-
-  gap: 12px;
-
-}
-
-
-.tier-input {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 7px;
-
-}
-
-
-.form-buttons {
-
-  display: flex;
-
-  gap: 10px;
-
-  margin-top: 25px;
-
-}
-
-
-.primary-btn,
-.secondary-btn {
-
-  min-height: 45px;
-
-  border-radius: 10px;
-
-  padding: 0 18px;
-
-  cursor: pointer;
-
-  font-weight: 900;
-
-}
-
-
-.primary-btn {
-
-  border: 0;
-
-  background:
-    linear-gradient(
-      135deg,
-      #ff1744,
-      #bd002c
+    setFormValue(
+        ["editingPlayerId"],
+        player.id
     );
 
-  color: white;
+
+    setFormValue(
+        ["playerName"],
+        player.name
+    );
+
+
+    setFormValue(
+        ["playerRegion"],
+        player.region
+    );
+
+
+    setFormValue(
+        ["avatarUrl"],
+        player.avatar_url || player.avatar
+    );
+
+
+    setFormValue(
+        ["skinUrl"],
+        player.skin_url || player.skin
+    );
+
+
+    MODES.forEach(mode => {
+
+        setFormValue(
+            [
+                `tier_${mode.key}`,
+                mode.key
+            ],
+            player[mode.key]
+        );
+
+    });
+
+
+    const title =
+        document.querySelector(
+            ".admin-card h2"
+        );
+
+    if (title) {
+        title.textContent =
+            "Chỉnh sửa player";
+    }
+
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
+
+
+/* =========================================================
+   SAVE PLAYER
+========================================================= */
+
+async function savePlayer(event) {
+
+    if (event) {
+        event.preventDefault();
+    }
+
+
+    const isAdmin =
+        await checkAdmin();
+
+    if (!isAdmin) {
+
+        showFormMessage(
+            "Bạn không có quyền admin.",
+            true
+        );
+
+        return;
+    }
+
+
+    const nameElement =
+        $("playerName");
+
+    const regionElement =
+        $("playerRegion");
+
+    if (!nameElement) {
+        return;
+    }
+
+
+    const name =
+        nameElement.value.trim();
+
+    const region =
+        regionElement
+            ? regionElement.value.trim()
+            : "VN";
+
+
+    if (!name) {
+
+        showFormMessage(
+            "Vui lòng nhập tên player.",
+            true
+        );
+
+        return;
+    }
+
+
+    const playerData = {
+
+        name: name,
+
+        region:
+            region || "VN",
+
+        avatar_url:
+            getInputValue(
+                ["avatarUrl"]
+            ),
+
+        skin_url:
+            getInputValue(
+                ["skinUrl"]
+            )
+    };
+
+
+    MODES.forEach(mode => {
+
+        playerData[mode.key] =
+            getInputValue([
+                `tier_${mode.key}`,
+                mode.key
+            ]) || null;
+
+    });
+
+
+    playerData.total_points =
+        calculateTotal(playerData);
+
+
+    let result;
+
+
+    if (editingPlayerId) {
+
+        result =
+            await supabaseClient
+                .from("players")
+                .update(playerData)
+                .eq("id", editingPlayerId)
+                .select()
+                .single();
+
+    } else {
+
+        result =
+            await supabaseClient
+                .from("players")
+                .insert(playerData)
+                .select()
+                .single();
+    }
+
+
+    if (result.error) {
+
+        console.error(
+            "SAVE ERROR:",
+            result.error
+        );
+
+        showFormMessage(
+            "Lưu thất bại: " +
+            result.error.message,
+            true
+        );
+
+        return;
+    }
+
+
+    showFormMessage(
+        editingPlayerId
+            ? "✅ Đã cập nhật player!"
+            : "✅ Đã thêm player!",
+        false
+    );
+
+
+    clearAdminForm();
+
+    await loadPlayers();
 
 }
 
 
-.secondary-btn {
+/* =========================================================
+   GET INPUT
+========================================================= */
 
-  background: #181013;
+function getInputValue(ids) {
 
-  color: #aaa;
+    for (const id of ids) {
 
-  border: 1px solid #3a252b;
+        const element =
+            $(id);
 
+        if (element) {
+
+            return element.value.trim();
+        }
+    }
+
+    return "";
 }
 
 
-.form-message {
+/* =========================================================
+   FORM MESSAGE
+========================================================= */
 
-  margin-top: 12px;
+function showFormMessage(message, error) {
 
-  font-size: 13px;
+    const element =
+        $("formMessage");
 
+    if (!element) return;
+
+    element.textContent =
+        message;
+
+    element.className =
+        error
+            ? "form-message error"
+            : "form-message success";
 }
 
 
-.form-message.success {
+/* =========================================================
+   DELETE PLAYER
+========================================================= */
 
-  color: #5ee59a;
+async function deletePlayer(playerId) {
 
+    const isAdmin =
+        await checkAdmin();
+
+    if (!isAdmin) {
+
+        alert(
+            "Bạn không có quyền admin."
+        );
+
+        return;
+    }
+
+
+    const player =
+        players.find(
+            item =>
+                String(item.id) ===
+                String(playerId)
+        );
+
+
+    if (!player) {
+        return;
+    }
+
+
+    const confirmed =
+        confirm(
+            `Bạn có chắc muốn xóa "${player.name}" không?`
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    const {
+        error
+    } = await supabaseClient
+        .from("players")
+        .delete()
+        .eq("id", playerId);
+
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            "Không thể xóa player:\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await loadPlayers();
+
+    alert(
+        "✅ Đã xóa player!"
+    );
 }
 
 
-.form-message.error {
+/* =========================================================
+   CANCEL EDIT
+========================================================= */
 
-  color: #ff657c;
+function cancelEdit() {
 
+    clearAdminForm();
+
+    const title =
+        document.querySelector(
+            ".admin-card h2"
+        );
+
+    if (title) {
+        title.textContent =
+            "Thêm / chỉnh sửa player";
+    }
 }
 
 
-.admin-list-title {
-
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: center;
-
-  margin-bottom: 18px;
-
-}
-
-
-.admin-list-title span {
-
-  color: #ff6179;
-
-}
-
-
-.admin-player-row {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 15px;
-
-  padding: 13px;
-
-  border-bottom: 1px solid #25171c;
-
-}
-
-
-.admin-player-info {
-
-  flex: 1;
-
-}
-
-
-.admin-player-actions {
-
-  display: flex;
-
-  gap: 7px;
-
-}
-
-
-.edit-btn,
-.delete-btn {
-
-  border-radius: 8px;
-
-  padding: 9px 12px;
-
-  cursor: pointer;
-
-  border: 1px solid #3c252b;
-
-  background: #170c0f;
-
-  color: white;
-
-}
-
-
-.delete-btn {
-
-  color: #ff6379;
-
-}
-
-
-
-/* =========================
+/* =========================================================
    LOGIN
-========================= */
+========================================================= */
 
-.modal {
+function openLogin() {
 
-  position: fixed;
+    const modal =
+        $("loginModal");
 
-  inset: 0;
+    if (modal) {
+        modal.classList.remove("hidden");
+    }
+}
 
-  z-index: 1000;
 
-  display: grid;
+function closeLogin() {
 
-  place-items: center;
+    const modal =
+        $("loginModal");
 
-  background:
-    rgba(0,0,0,.78);
+    if (modal) {
+        modal.classList.add("hidden");
+    }
 
-  backdrop-filter: blur(12px);
+    const message =
+        $("loginMessage");
+
+    if (message) {
+        message.textContent = "";
+    }
+}
+
+
+async function loginAdmin(event) {
+
+    if (event) {
+        event.preventDefault();
+    }
+
+
+    const emailElement =
+        $("loginEmail");
+
+    const passwordElement =
+        $("loginPassword");
+
+
+    if (!emailElement ||
+        !passwordElement) {
+
+        return;
+    }
+
+
+    const email =
+        emailElement.value.trim();
+
+    const password =
+        passwordElement.value;
+
+
+    const message =
+        $("loginMessage");
+
+
+    if (message) {
+        message.textContent =
+            "Đang đăng nhập...";
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient.auth
+            .signInWithPassword({
+                email,
+                password
+            });
+
+
+    if (error) {
+
+        console.error(error);
+
+        if (message) {
+
+            message.textContent =
+                "❌ " +
+                error.message;
+        }
+
+        return;
+    }
+
+
+    const isAdmin =
+        await checkAdmin();
+
+
+    if (!isAdmin) {
+
+        await supabaseClient.auth.signOut();
+
+        if (message) {
+
+            message.textContent =
+                "❌ Tài khoản này không có quyền admin.";
+        }
+
+        return;
+    }
+
+
+    if (message) {
+
+        message.textContent =
+            "✅ Đăng nhập thành công!";
+    }
+
+
+    closeLogin();
+
+    await checkAdmin();
+
+    await loadPlayers();
+
+    setTimeout(() => {
+
+        openAdmin();
+
+    }, 150);
 
 }
 
 
-.modal-box {
+/* =========================================================
+   LOGOUT
+========================================================= */
 
-  position: relative;
+async function logoutAdmin() {
 
-  width: min(440px, calc(100% - 30px));
+    await supabaseClient.auth.signOut();
 
-  padding: 30px;
+    await checkAdmin();
 
-  border-radius: 18px;
+    showScreen("rankingScreen");
 
-  border: 1px solid #512530;
-
-  background:
-    linear-gradient(
-      180deg,
-      #180e11,
-      #0b0809
+    alert(
+        "Đã đăng xuất admin."
     );
+}
 
-  box-shadow:
-    0 30px 100px
-    rgba(0,0,0,.7);
+
+/* =========================================================
+   EVENTS
+========================================================= */
+
+function setupEvents() {
+
+    const search =
+        $("playerSearch");
+
+    if (search) {
+
+        search.addEventListener(
+            "input",
+            searchPlayers
+        );
+
+    }
+
+
+    const mode =
+        $("modeFilter");
+
+    if (mode) {
+
+        mode.addEventListener(
+            "change",
+            event =>
+                changeMode(
+                    event.target.value
+                )
+        );
+
+    }
+
+
+    const sort =
+        $("sortSelect");
+
+    if (sort) {
+
+        sort.addEventListener(
+            "change",
+            event =>
+                changeSort(
+                    event.target.value
+                )
+        );
+
+    }
+
+
+    const loginForm =
+        $("loginForm");
+
+    if (loginForm) {
+
+        loginForm.addEventListener(
+            "submit",
+            loginAdmin
+        );
+
+    }
+
+
+    const playerForm =
+        $("playerForm");
+
+    if (playerForm) {
+
+        playerForm.addEventListener(
+            "submit",
+            savePlayer
+        );
+
+    }
+
+
+    const loginButton =
+        $("loginButton");
+
+    if (loginButton) {
+
+        loginButton.addEventListener(
+            "click",
+            openLogin
+        );
+
+    }
+
+
+    const logoutButton =
+        $("logoutButton");
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            logoutAdmin
+        );
+
+    }
+
+
+    const adminNav =
+        $("adminNav");
+
+    if (adminNav) {
+
+        adminNav.addEventListener(
+            "click",
+            openAdmin
+        );
+
+    }
+
+
+    const rankingNav =
+        $("rankingNav");
+
+    if (rankingNav) {
+
+        rankingNav.addEventListener(
+            "click",
+            () =>
+                showScreen(
+                    "rankingScreen"
+                )
+        );
+
+    }
+
+
+    const closeLoginButton =
+        document.querySelector(
+            ".modal-close"
+        );
+
+    if (closeLoginButton) {
+
+        closeLoginButton.addEventListener(
+            "click",
+            closeLogin
+        );
+
+    }
+
+
+    const cancelButton =
+        $("cancelEdit");
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            cancelEdit
+        );
+
+    }
 
 }
 
 
-.modal-box h2 {
+/* =========================================================
+   AUTH STATE
+========================================================= */
 
-  font-size: 30px;
+supabaseClient.auth.onAuthStateChange(
+    async () => {
 
-  margin-bottom: 10px;
+        setTimeout(
+            async () => {
 
-}
+                await checkAdmin();
 
+            },
+            0
+        );
 
-.modal-box p {
+    }
+);
 
-  color: #93858a;
 
-  font-size: 13px;
+/* =========================================================
+   INIT
+========================================================= */
 
-  line-height: 1.6;
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
 
-  margin-bottom: 20px;
+        setupEvents();
 
-}
+        showScreen(
+            "rankingScreen"
+        );
 
+        await checkAdmin();
 
-.modal-box form {
+        await loadPlayers();
 
-  display: flex;
+    }
+);
 
-  flex-direction: column;
 
-  gap: 12px;
+/* =========================================================
+   GLOBAL FUNCTIONS
+   HTML ONCLICK CAN USE THESE
+========================================================= */
 
-}
+window.openProfile =
+    openProfile;
 
+window.backToRanking =
+    backToRanking;
 
-.modal-close {
+window.openAdmin =
+    openAdmin;
 
-  position: absolute;
+window.openLogin =
+    openLogin;
 
-  top: 12px;
+window.closeLogin =
+    closeLogin;
 
-  right: 12px;
+window.loginAdmin =
+    loginAdmin;
 
-  width: 35px;
+window.logoutAdmin =
+    logoutAdmin;
 
-  height: 35px;
+window.savePlayer =
+    savePlayer;
 
-  border-radius: 9px;
+window.editPlayer =
+    editPlayer;
 
-  border: 1px solid #3d252b;
+window.deletePlayer =
+    deletePlayer;
 
-  background: #120a0c;
+window.cancelEdit =
+    cancelEdit;
 
-  color: #bbb;
+window.searchPlayers =
+    searchPlayers;
 
-  font-size: 23px;
+window.changeMode =
+    changeMode;
 
-  cursor: pointer;
-
-}
-
-
-
-/* =========================
-   UTILITY
-========================= */
-
-.loading,
-.empty {
-
-  padding: 50px;
-
-  text-align: center;
-
-  color: #807277;
-
-}
-
-
-.hidden {
-
-  display: none !important;
-
-}
-
-
-
-/* =========================
-   MOBILE
-========================= */
-
-@media (max-width: 1050px) {
-
-  .ranking-table-header {
-    display: none;
-  }
-
-  .ranking-row {
-
-    grid-template-columns:
-      55px
-      1fr
-      auto;
-
-  }
-
-  .tier-list {
-
-    grid-column: 2 / 4;
-
-  }
-
-  .total-points {
-
-    grid-column: 3;
-
-    grid-row: 1;
-
-  }
-
-  .region-badge {
-
-    display: none;
-  }
-
-  .tier-input-grid {
-
-    grid-template-columns:
-      repeat(2, 1fr);
-
-  }
-
-}
-
-
-@media (max-width: 750px) {
-
-  .topbar {
-
-    width: calc(100% - 20px);
-
-    flex-wrap: wrap;
-
-    gap: 10px;
-
-  }
-
-  .navigation {
-
-    order: 3;
-
-    width: 100%;
-
-  }
-
-  .header-actions {
-
-    margin-left: auto;
-
-  }
-
-  .main-container {
-
-    width: calc(100% - 20px);
-
-    margin-top: 20px;
-
-  }
-
-  .page-card {
-
-    padding: 15px;
-
-  }
-
-  .page-heading {
-
-    flex-direction: column;
-
-    align-items: flex-start;
-
-  }
-
-  h1 {
-
-    font-size: 34px;
-
-  }
-
-  .controls {
-
-    flex-direction: column;
-
-  }
-
-  .ranking-row {
-
-    grid-template-columns:
-      42px
-      1fr
-      auto;
-
-    padding: 10px;
-
-  }
-
-  .avatar {
-
-    width: 52px;
-
-    height: 52px;
-
-  }
-
-  .player-name {
-
-    font-size: 15px;
-
-  }
-
-  .tier-list {
-
-    grid-column: 1 / 4;
-
-  }
-
-  .profile-grid {
-
-    grid-template-columns:
-      repeat(2, 1fr);
-
-  }
-
-  .form-grid {
-
-    grid-template-columns: 1fr;
-
-  }
-
-  .tier-input-grid {
-
-    grid-template-columns: 1fr;
-
-  }
-
-}
-
-
-@media (max-width: 480px) {
-
-  .brand {
-
-    min-width: 0;
-
-  }
-
-  .brand-title {
-
-    font-size: 16px;
-
-  }
-
-  .login-btn {
-
-    padding: 10px;
-
-    font-size: 10px;
-
-  }
-
-  .navigation {
-
-    overflow-x: auto;
-
-  }
-
-  .nav-item {
-
-    white-space: nowrap;
-
-  }
-
-  .profile-avatar {
-
-    width: 160px;
-
-    height: 160px;
-
-  }
-
-}
+window.changeSort =
+    changeSort;
