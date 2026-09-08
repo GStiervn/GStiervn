@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
 
+<head>
   <meta charset="UTF-8">
 
   <meta
@@ -17,787 +17,993 @@
   <title>GStier VN</title>
 
   <link rel="stylesheet" href="style.css">
-
 </head>
 
 
 <body>
 
+  <!-- =====================================================
+       BACKGROUND
+  ====================================================== -->
 
-<!-- =========================
-     BACKGROUND
-========================= -->
-
-<div class="bg-logo">
-  GSTIER
-</div>
-
-<div class="red-glow glow-one"></div>
-<div class="red-glow glow-two"></div>
-
-
-<!-- =========================
-     HEADER
-========================= -->
-
-<header class="topbar">
-
-  <div
-    class="brand"
-    onclick="goHome()"
-  >
-
-    <div class="brand-icon">
-      GS
-    </div>
-
-    <div>
-
-      <div class="brand-title">
-        GSTIER
-      </div>
-
-      <div class="brand-subtitle">
-        VIETNAM
-      </div>
-
-    </div>
-
+  <div class="background-logo">
+    GSTIER
   </div>
 
+  <div class="red-glow glow-1"></div>
+  <div class="red-glow glow-2"></div>
 
-  <nav class="navigation">
 
-    <button
-      class="nav-item active"
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+
+  <header class="topbar">
+
+    <!-- LOGO -->
+
+    <div
+      class="brand"
       onclick="goHome()"
     >
-      🏆 RANKING
-    </button>
 
+      <div class="brand-mark">
+        GS
+      </div>
 
-    <button
-      class="nav-item admin-only hidden"
-      onclick="openAdminPanel()"
-    >
-      ⚙️ ADMIN
-    </button>
+      <div class="brand-text">
 
-  </nav>
-
-
-  <div class="header-actions">
-
-    <button
-      id="loginButton"
-      class="login-btn"
-      onclick="openLogin()"
-    >
-      ADMIN LOGIN
-    </button>
-
-
-    <button
-      id="logoutButton"
-      class="logout-btn hidden"
-      onclick="logoutAdmin()"
-    >
-      ĐĂNG XUẤT
-    </button>
-
-  </div>
-
-</header>
-
-
-
-<!-- =========================
-     MAIN
-========================= -->
-
-<main class="main-container">
-
-
-<!-- =========================
-     RANKING PAGE
-========================= -->
-
-<section id="rankingPage">
-
-
-  <div class="page-card">
-
-
-    <!-- TITLE -->
-
-    <div class="page-heading">
-
-      <div>
-
-        <div class="eyebrow">
-          GSTIER VN • MINECRAFT PVP
+        <div class="brand-title">
+          GSTIER
         </div>
 
-        <h1>
-          RANKINGS
-        </h1>
-
-        <p>
-          Xếp hạng người chơi Minecraft PvP Việt Nam
-        </p>
+        <div class="brand-subtitle">
+          VIETNAM
+        </div>
 
       </div>
 
+    </div>
 
-      <div class="ranking-info">
 
-        <span>
-          🔥
-        </span>
+    <!-- NAVIGATION -->
+
+    <nav class="navigation">
+
+      <button
+        class="nav-item active"
+        onclick="goHome()"
+      >
+        🏆 RANKING
+      </button>
+
+
+      <button
+        class="nav-item admin-only hidden"
+        onclick="openAdminPanel()"
+      >
+        ⚙️ ADMIN
+      </button>
+
+    </nav>
+
+
+    <!-- HEADER ACTIONS -->
+
+    <div class="header-actions">
+
+      <button
+        id="loginButton"
+        class="login-btn"
+        onclick="openLogin()"
+      >
+        ADMIN LOGIN
+      </button>
+
+
+      <button
+        id="logoutButton"
+        class="logout-btn hidden"
+        onclick="logoutAdmin()"
+      >
+        ĐĂNG XUẤT
+      </button>
+
+    </div>
+
+  </header>
+
+
+
+  <!-- =====================================================
+       MAIN
+  ====================================================== -->
+
+  <main class="main-container">
+
+
+    <!-- ===================================================
+         RANKING PAGE
+    ==================================================== -->
+
+    <section id="rankingPage">
+
+      <div class="ranking-container">
+
+
+        <!-- PAGE HEADER -->
+
+        <div class="page-heading">
+
+          <div>
+
+            <div class="eyebrow">
+              GSTIER VN • MINECRAFT PVP
+            </div>
+
+            <h1>
+              RANKINGS
+            </h1>
+
+            <p>
+              Xếp hạng người chơi Minecraft PvP Việt Nam
+            </p>
+
+          </div>
+
+
+          <div class="ranking-badge">
+
+            <div class="ranking-badge-icon">
+              GS
+            </div>
+
+            <div>
+
+              <strong>
+                GSTIER VN
+              </strong>
+
+              <span>
+                PvP TIER LIST
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             SEARCH + FILTER
+        ================================================== -->
+
+        <div class="controls">
+
+
+          <!-- SEARCH -->
+
+          <div class="search-wrapper">
+
+            <span class="search-icon">
+              🔎
+            </span>
+
+            <input
+              id="searchInput"
+              type="text"
+              placeholder="Tìm kiếm Player..."
+              oninput="renderRanking()"
+              autocomplete="off"
+            >
+
+          </div>
+
+
+
+          <!-- MODE -->
+
+          <select
+            id="modeFilter"
+            onchange="renderRanking()"
+          >
+
+            <option value="ALL">
+              Tất cả Game Mode
+            </option>
+
+            <option value="Sword">
+              ⚔️ Sword
+            </option>
+
+            <option value="CPvP">
+              💥 CPvP
+            </option>
+
+            <option value="UHC">
+              ❤️ UHC
+            </option>
+
+            <option value="Mace">
+              🔨 Mace
+            </option>
+
+            <option value="NetherPot">
+              🧪 NetherPot
+            </option>
+
+            <option value="SMP">
+              🌍 SMP
+            </option>
+
+            <option value="Axe">
+              🪓 Axe
+            </option>
+
+          </select>
+
+
+
+          <!-- SORT -->
+
+          <select
+            id="sortFilter"
+            onchange="renderRanking()"
+          >
+
+            <option value="points">
+              Tổng điểm
+            </option>
+
+            <option value="name">
+              Tên A → Z
+            </option>
+
+          </select>
+
+        </div>
+
+
+
+        <!-- =================================================
+             RANKING HEADER
+        ================================================== -->
+
+        <div class="ranking-table-header">
+
+          <div class="rank-column">
+            #
+          </div>
+
+          <div class="player-column">
+            PLAYER
+          </div>
+
+          <div class="region-column">
+            REGION
+          </div>
+
+          <div class="tiers-column">
+            TIERS
+          </div>
+
+          <div class="points-column">
+            POINTS
+          </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             PLAYER LIST
+        ================================================== -->
+
+        <div
+          id="rankingList"
+          class="ranking-list"
+        >
+
+          <div class="loading">
+            Đang tải Ranking...
+          </div>
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         PROFILE PAGE
+    ==================================================== -->
+
+    <section
+      id="profilePage"
+      class="profile-page hidden"
+    >
+
+      <button
+        class="back-btn"
+        onclick="goHome()"
+      >
+        ← QUAY LẠI RANKING
+      </button>
+
+
+      <div
+        id="profileContent"
+        class="profile-content"
+      ></div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         ADMIN PAGE
+    ==================================================== -->
+
+    <section
+      id="adminPage"
+      class="admin-page hidden"
+    >
+
+
+      <!-- ADMIN HEADER -->
+
+      <div class="admin-heading">
 
         <div>
 
-          <strong>
-            GSTIER VN
-          </strong>
+          <div class="eyebrow">
+            GSTIER MANAGEMENT
+          </div>
 
-          <small>
-            PvP Tier List
-          </small>
+          <h1>
+            ADMIN <span>PANEL</span>
+          </h1>
+
+          <p>
+            Quản lý người chơi và Tier Ranking
+          </p>
+
+        </div>
+
+
+        <button
+          class="back-btn"
+          onclick="goHome()"
+        >
+          ← RANKING
+        </button>
+
+      </div>
+
+
+
+      <!-- =================================================
+           PLAYER FORM
+      ================================================== -->
+
+      <div class="admin-card">
+
+        <h2 id="formTitle">
+          THÊM PLAYER
+        </h2>
+
+
+        <form id="playerForm">
+
+
+          <!-- EDITING ID -->
+
+          <input
+            type="hidden"
+            id="editingPlayerId"
+          >
+
+
+          <!-- BASIC INFORMATION -->
+
+          <div class="form-grid">
+
+
+            <!-- PLAYER NAME -->
+
+            <div class="form-group">
+
+              <label>
+                Tên Player
+              </label>
+
+              <input
+                id="playerName"
+                type="text"
+                required
+                maxlength="32"
+                placeholder="Ví dụ: NguyenPvP"
+              >
+
+            </div>
+
+
+
+            <!-- REGION -->
+
+            <div class="form-group">
+
+              <label>
+                Region
+              </label>
+
+              <select id="playerRegion">
+
+                <option value="VN">
+                  🇻🇳 VN
+                </option>
+
+                <option value="SEA">
+                  🌏 SEA
+                </option>
+
+                <option value="ASIA">
+                  🌏 ASIA
+                </option>
+
+                <option value="NA">
+                  🌎 NA
+                </option>
+
+                <option value="EU">
+                  🇪🇺 EU
+                </option>
+
+              </select>
+
+            </div>
+
+
+
+            <!-- AVATAR -->
+
+            <div class="form-group">
+
+              <label>
+                Avatar
+              </label>
+
+              <input
+                id="playerAvatarFile"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+              >
+
+              <small>
+                PNG / JPG / WEBP — tối đa 5MB
+              </small>
+
+              <input
+                id="playerAvatarUrl"
+                type="hidden"
+              >
+
+            </div>
+
+
+
+            <!-- MINECRAFT SKIN -->
+
+            <div class="form-group">
+
+              <label>
+                Minecraft Skin
+              </label>
+
+              <input
+                id="playerSkinFile"
+                type="file"
+                accept="image/png"
+              >
+
+              <small>
+                Skin PNG — tối đa 2MB
+              </small>
+
+              <input
+                id="playerSkinUrl"
+                type="hidden"
+              >
+
+            </div>
+
+
+          </div>
+
+
+
+          <!-- =================================================
+               TIERS
+          ================================================== -->
+
+          <h3 class="section-label">
+            PLAYER TIERS
+          </h3>
+
+
+          <div class="tier-input-grid">
+
+
+            <!-- SWORD -->
+
+            <div class="tier-input">
+
+              <label>
+                ⚔️ Sword
+              </label>
+
+              <select id="swordTier">
+
+                <option value="">
+                  Chưa có
+                </option>
+
+                <option>LT5</option>
+                <option>HT5</option>
+
+                <option>LT4</option>
+                <option>HT4</option>
+
+                <option>LT3</option>
+                <option>HT3</option>
+
+                <option>LT2</option>
+                <option>HT2</option>
+
+                <option>LT1</option>
+                <option>HT1</option>
+
+              </select>
+
+            </div>
+
+
+
+            <!-- CPVP -->
+
+            <div class="tier-input">
+
+              <label>
+                💥 CPvP
+              </label>
+
+              <select id="cpvpTier">
+
+                <option value="">
+                  Chưa có
+                </option>
+
+                <option>LT5</option>
+                <option>HT5</option>
+
+                <option>LT4</option>
+                <option>HT4</option>
+
+                <option>LT3</option>
+                <option>HT3</option>
+
+                <option>LT2</option>
+                <option>HT2</option>
+
+                <option>LT1</option>
+                <option>HT1</option>
+
+              </select>
+
+            </div>
+
+
+
+            <!-- UHC -->
+
+            <div class="tier-input">
+
+              <label>
+                ❤️ UHC
+              </label>
+
+              <select id="uhcTier">
+
+                <option value="">
+                  Chưa có
+                </option>
+
+                <option>LT5</option>
+                <option>HT5</option>
+
+                <option>LT4</option>
+                <option>HT4</option>
+
+                <option>LT3</option>
+                <option>HT3</option>
+
+                <option>LT2</option>
+                <option>HT2</option>
+
+                <option>LT1</option>
+                <option>HT1</option>
+
+              </select>
+
+            </div>
+
+
+
+            <!-- MACE -->
+
+            <div class="tier-input">
+
+              <label>
+                🔨 Mace
+              </label>
+
+              <select id="maceTier">
+
+                <option value="">
+                  Chưa có
+                </option>
+
+                <option>LT5</option>
+                <option>HT5</option>
+
+                <option>LT4</option>
+                <option>HT4</option>
+
+                <option>LT3</option>
+                <option>HT3</option>
+
+                <option>LT2</option>
+                <option>HT2</option>
+
+                <option>LT1</option>
+                <option>HT1</option>
+
+              </select>
+
+            </div>
+
+
+
+            <!-- NETHERPOT -->
+
+            <div class="tier-input">
+
+              <label>
+                🧪 NetherPot
+              </label>
+
+              <select id="netherpotTier">
+
+                <option value="">
+                  Chưa có
+                </option>
+
+                <option>LT5</option>
+                <option>HT5</option>
+
+                <option>LT4</option>
+                <option>HT4</option>
+
+                <option>LT3</option>
+                <option>HT3</option>
+
+                <option>LT2</option>
+                <option>HT2</option>
+
+                <option>LT1</option>
+                <option>HT1</option>
+
+              </select>
+
+            </div>
+
+
+
+            <!-- SMP -->
+
+            <div class="tier-input">
+
+              <label>
+                🌍 SMP
+              </label>
+
+              <select id="smpTier">
+
+                <option value="">
+                  Chưa có
+                </option>
+
+                <option>LT5</option>
+                <option>HT5</option>
+
+                <option>LT4</option>
+                <option>HT4</option>
+
+                <option>LT3</option>
+                <option>HT3</option>
+
+                <option>LT2</option>
+                <option>HT2</option>
+
+                <option>LT1</option>
+                <option>HT1</option>
+
+              </select>
+
+            </div>
+
+
+
+            <!-- AXE -->
+
+            <div class="tier-input">
+
+              <label>
+                🪓 Axe
+              </label>
+
+              <select id="axeTier">
+
+                <option value="">
+                  Chưa có
+                </option>
+
+                <option>LT5</option>
+                <option>HT5</option>
+
+                <option>LT4</option>
+                <option>HT4</option>
+
+                <option>LT3</option>
+                <option>HT3</option>
+
+                <option>LT2</option>
+                <option>HT2</option>
+
+                <option>LT1</option>
+                <option>HT1</option>
+
+              </select>
+
+            </div>
+
+
+          </div>
+
+
+
+          <!-- FORM BUTTONS -->
+
+          <div class="form-buttons">
+
+            <button
+              type="submit"
+              class="primary-btn"
+            >
+              💾 LƯU PLAYER
+            </button>
+
+
+            <button
+              type="button"
+              class="secondary-btn"
+              onclick="resetPlayerForm()"
+            >
+              HỦY
+            </button>
+
+          </div>
+
+
+          <div
+            id="formMessage"
+            class="form-message"
+          ></div>
+
+
+        </form>
+
+      </div>
+
+
+
+      <!-- =================================================
+           ADMIN PLAYER LIST
+      ================================================== -->
+
+      <div class="admin-card">
+
+        <div class="admin-list-title">
+
+          <div>
+
+            <h2>
+              QUẢN LÝ PLAYER
+            </h2>
+
+            <p>
+              Chỉ Admin mới có thể chỉnh sửa dữ liệu.
+            </p>
+
+          </div>
+
+
+          <span id="adminPlayerCount">
+            0 Player
+          </span>
+
+        </div>
+
+
+        <div id="adminPlayerList">
+
+          <div class="loading">
+            Đang tải...
+          </div>
 
         </div>
 
       </div>
 
-    </div>
+
+    </section>
+
+
+  </main>
 
 
 
-    <!-- SEARCH -->
+  <!-- =====================================================
+       PROFILE MODAL
+       JS sẽ đổ nội dung Player vào #profileModalContent
+  ====================================================== -->
 
-    <div class="controls">
-
-
-      <div class="search-wrapper">
-
-        <span>
-          🔎
-        </span>
-
-        <input
-          id="searchInput"
-          type="text"
-          placeholder="Tìm kiếm Player..."
-          oninput="renderRanking()"
-        >
-
-      </div>
-
-
-
-      <select
-        id="modeFilter"
-        onchange="renderRanking()"
-      >
-
-        <option value="ALL">
-          Tất cả Game Mode
-        </option>
-
-        <option value="Sword">
-          ⚔️ Sword
-        </option>
-
-        <option value="CPvP">
-          💥 CPvP
-        </option>
-
-        <option value="UHC">
-          ❤️ UHC
-        </option>
-
-        <option value="Mace">
-          🔨 Mace
-        </option>
-
-        <option value="NetherPot">
-          🧪 NetherPot
-        </option>
-
-        <option value="SMP">
-          🌍 SMP
-        </option>
-
-        <option value="Axe">
-          🪓 Axe
-        </option>
-
-      </select>
-
-
-
-      <select
-        id="sortFilter"
-        onchange="renderRanking()"
-      >
-
-        <option value="points">
-          Tổng điểm
-        </option>
-
-        <option value="name">
-          Tên A → Z
-        </option>
-
-      </select>
-
-    </div>
-
-
-
-    <!-- TABLE HEADER -->
-
-    <div class="ranking-table-header">
-
-      <div>
-        #
-      </div>
-
-      <div>
-        PLAYER
-      </div>
-
-      <div>
-        REGION
-      </div>
-
-      <div>
-        TIERS
-      </div>
-
-      <div>
-        POINTS
-      </div>
-
-    </div>
-
-
-
-    <!-- PLAYER LIST -->
+  <div
+    id="profileModal"
+    class="profile-modal hidden"
+  >
 
     <div
-      id="rankingList"
-      class="ranking-list"
-    >
+      class="profile-overlay"
+      onclick="closeProfile()"
+    ></div>
 
-      <div class="loading">
-        Đang tải Ranking...
-      </div>
+
+    <div class="profile-modal-box">
+
+
+      <!-- CLOSE -->
+
+      <button
+        class="profile-close"
+        onclick="closeProfile()"
+        aria-label="Đóng"
+      >
+        ×
+      </button>
+
+
+      <!-- CONTENT -->
+
+      <div
+        id="profileModalContent"
+        class="profile-modal-content"
+      ></div>
+
 
     </div>
 
-
   </div>
 
-</section>
 
 
+  <!-- =====================================================
+       LOGIN MODAL
+  ====================================================== -->
 
-<!-- =========================
-     PROFILE PAGE
-========================= -->
-
-<section
-  id="profilePage"
-  class="hidden"
->
-
-
-  <button
-    class="back-btn"
-    onclick="goHome()"
+  <div
+    id="loginModal"
+    class="modal hidden"
   >
-    ← QUAY LẠI RANKING
-  </button>
+
+    <div class="modal-overlay"></div>
 
 
-  <div id="profileContent"></div>
+    <div class="modal-box">
 
 
-</section>
+      <button
+        class="modal-close"
+        onclick="closeLogin()"
+      >
+        ×
+      </button>
 
-
-
-<!-- =========================
-     ADMIN PAGE
-========================= -->
-
-<section
-  id="adminPage"
-  class="hidden"
->
-
-
-  <div class="admin-heading">
-
-    <div>
 
       <div class="eyebrow">
-        GSTIER MANAGEMENT
-      </div>
-
-      <h1>
-        ADMIN <span>PANEL</span>
-      </h1>
-
-    </div>
-
-
-    <button
-      class="back-btn"
-      onclick="goHome()"
-    >
-      ← RANKING
-    </button>
-
-  </div>
-
-
-
-  <!-- PLAYER FORM -->
-
-  <div class="admin-card">
-
-
-    <h2 id="formTitle">
-      THÊM PLAYER
-    </h2>
-
-
-    <form id="playerForm">
-
-
-      <input
-        type="hidden"
-        id="editingPlayerId"
-      >
-
-
-      <div class="form-grid">
-
-
-        <div class="form-group">
-
-          <label>
-            Tên Player
-          </label>
-
-          <input
-            id="playerName"
-            required
-            maxlength="32"
-            placeholder="Ví dụ: NguyenPvP"
-          >
-
-        </div>
-
-
-
-        <div class="form-group">
-
-          <label>
-            Region
-          </label>
-
-          <select id="playerRegion">
-
-            <option value="VN">
-              🇻🇳 VN
-            </option>
-
-            <option value="SEA">
-              🌏 SEA
-            </option>
-
-            <option value="ASIA">
-              🌏 ASIA
-            </option>
-
-            <option value="NA">
-              🌎 NA
-            </option>
-
-            <option value="EU">
-              🇪🇺 EU
-            </option>
-
-          </select>
-
-        </div>
-
-
-
-        <div class="form-group">
-
-          <label>
-            Avatar
-          </label>
-
-          <input
-            id="playerAvatarFile"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-          >
-
-          <small>
-            PNG / JPG / WEBP — tối đa 5MB
-          </small>
-
-          <input
-            id="playerAvatarUrl"
-            type="hidden"
-          >
-
-        </div>
-
-
-
-        <div class="form-group">
-
-          <label>
-            Minecraft Skin
-          </label>
-
-          <input
-            id="playerSkinFile"
-            type="file"
-            accept="image/png"
-          >
-
-          <small>
-            Skin PNG — tối đa 2MB
-          </small>
-
-          <input
-            id="playerSkinUrl"
-            type="hidden"
-          >
-
-        </div>
-
-
+        GSTIER ADMIN
       </div>
 
 
-
-      <h3 class="section-label">
-        PLAYER TIERS
-      </h3>
-
+      <h2>
+        ĐĂNG NHẬP
+      </h2>
 
 
-      <div class="tier-input-grid">
+      <p>
+        Chỉ tài khoản Admin mới có quyền
+        chỉnh sửa Ranking.
+      </p>
 
 
-        <div class="tier-input">
-          <label>⚔️ Sword</label>
-
-          <select id="swordTier">
-            <option value="">Chưa có</option>
-            <option>LT5</option>
-            <option>HT5</option>
-            <option>LT4</option>
-            <option>HT4</option>
-            <option>LT3</option>
-            <option>HT3</option>
-            <option>LT2</option>
-            <option>HT2</option>
-            <option>LT1</option>
-            <option>HT1</option>
-          </select>
-        </div>
+      <form id="loginForm">
 
 
-
-        <div class="tier-input">
-          <label>💥 CPvP</label>
-
-          <select id="cpvpTier">
-            <option value="">Chưa có</option>
-            <option>LT5</option>
-            <option>HT5</option>
-            <option>LT4</option>
-            <option>HT4</option>
-            <option>LT3</option>
-            <option>HT3</option>
-            <option>LT2</option>
-            <option>HT2</option>
-            <option>LT1</option>
-            <option>HT1</option>
-          </select>
-        </div>
+        <input
+          id="loginEmail"
+          type="email"
+          placeholder="Email Admin"
+          required
+          autocomplete="username"
+        >
 
 
+        <input
+          id="loginPassword"
+          type="password"
+          placeholder="Mật khẩu"
+          required
+          autocomplete="current-password"
+        >
 
-        <div class="tier-input">
-          <label>❤️ UHC</label>
-
-          <select id="uhcTier">
-            <option value="">Chưa có</option>
-            <option>LT5</option>
-            <option>HT5</option>
-            <option>LT4</option>
-            <option>HT4</option>
-            <option>LT3</option>
-            <option>HT3</option>
-            <option>LT2</option>
-            <option>HT2</option>
-            <option>LT1</option>
-            <option>HT1</option>
-          </select>
-        </div>
-
-
-
-        <div class="tier-input">
-          <label>🔨 Mace</label>
-
-          <select id="maceTier">
-            <option value="">Chưa có</option>
-            <option>LT5</option>
-            <option>HT5</option>
-            <option>LT4</option>
-            <option>HT4</option>
-            <option>LT3</option>
-            <option>HT3</option>
-            <option>LT2</option>
-            <option>HT2</option>
-            <option>LT1</option>
-            <option>HT1</option>
-          </select>
-        </div>
-
-
-
-        <div class="tier-input">
-          <label>🧪 NetherPot</label>
-
-          <select id="netherpotTier">
-            <option value="">Chưa có</option>
-            <option>LT5</option>
-            <option>HT5</option>
-            <option>LT4</option>
-            <option>HT4</option>
-            <option>LT3</option>
-            <option>HT3</option>
-            <option>LT2</option>
-            <option>HT2</option>
-            <option>LT1</option>
-            <option>HT1</option>
-          </select>
-        </div>
-
-
-
-        <div class="tier-input">
-          <label>🌍 SMP</label>
-
-          <select id="smpTier">
-            <option value="">Chưa có</option>
-            <option>LT5</option>
-            <option>HT5</option>
-            <option>LT4</option>
-            <option>HT4</option>
-            <option>LT3</option>
-            <option>HT3</option>
-            <option>LT2</option>
-            <option>HT2</option>
-            <option>LT1</option>
-            <option>HT1</option>
-          </select>
-        </div>
-
-
-
-        <div class="tier-input">
-          <label>🪓 Axe</label>
-
-          <select id="axeTier">
-            <option value="">Chưa có</option>
-            <option>LT5</option>
-            <option>HT5</option>
-            <option>LT4</option>
-            <option>HT4</option>
-            <option>LT3</option>
-            <option>HT3</option>
-            <option>LT2</option>
-            <option>HT2</option>
-            <option>LT1</option>
-            <option>HT1</option>
-          </select>
-        </div>
-
-
-      </div>
-
-
-
-      <div class="form-buttons">
 
         <button
           type="submit"
           class="primary-btn"
         >
-          💾 LƯU PLAYER
+          🔐 ĐĂNG NHẬP
         </button>
 
 
-        <button
-          type="button"
-          class="secondary-btn"
-          onclick="resetPlayerForm()"
-        >
-          HỦY
-        </button>
-
-      </div>
+        <div
+          id="loginMessage"
+          class="form-message"
+        ></div>
 
 
-      <div
-        id="formMessage"
-        class="form-message"
-      ></div>
+      </form>
 
-
-    </form>
-
-
-  </div>
-
-
-
-  <!-- PLAYER MANAGEMENT -->
-
-  <div class="admin-card">
-
-    <div class="admin-list-title">
-
-      <h2>
-        QUẢN LÝ PLAYER
-      </h2>
-
-      <span id="adminPlayerCount">
-        0 Player
-      </span>
-
-    </div>
-
-
-    <div id="adminPlayerList">
-
-      <div class="loading">
-        Đang tải...
-      </div>
 
     </div>
 
   </div>
 
 
-</section>
 
+  <!-- =====================================================
+       SUPABASE
+  ====================================================== -->
 
-</main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-
-
-<!-- =========================
-     LOGIN MODAL
-========================= -->
-
-<div
-  id="loginModal"
-  class="modal hidden"
->
-
-
-  <div class="modal-box">
-
-
-    <button
-      class="modal-close"
-      onclick="closeLogin()"
-    >
-      ×
-    </button>
-
-
-    <div class="eyebrow">
-      GSTIER ADMIN
-    </div>
-
-
-    <h2>
-      ĐĂNG NHẬP
-    </h2>
-
-
-    <p>
-      Chỉ tài khoản Admin mới có quyền
-      chỉnh sửa Ranking.
-    </p>
-
-
-    <form id="loginForm">
-
-
-      <input
-        id="loginEmail"
-        type="email"
-        placeholder="Email Admin"
-        required
-      >
-
-
-      <input
-        id="loginPassword"
-        type="password"
-        placeholder="Mật khẩu"
-        required
-      >
-
-
-      <button
-        type="submit"
-        class="primary-btn"
-      >
-        ĐĂNG NHẬP
-      </button>
-
-
-      <div
-        id="loginMessage"
-        class="form-message"
-      ></div>
-
-
-    </form>
-
-
-  </div>
-
-</div>
-
-
-
-<!-- =========================
-     SUPABASE
-========================= -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 
 
 </body>
+
 </html>
