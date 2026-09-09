@@ -2,15 +2,11 @@
 /* =========================================================
    GSTIER VN
    SCRIPT.JS
-   SUPABASE + RANKING + PROFILE + ADMIN
-   ========================================================= */
-
-/* =========================================================
-   SUPABASE
+   SUPABASE + RANKING + PROFILE + ADMIN + STORAGE
    ========================================================= */
 
 const SUPABASE_URL = "https://sibttxgvndumphuryxwc.supabase.co";
-const SUPABASE_KEY = "sb_publishable_5TyrZwFYdY-AgykyuopXpA_GGKNZ4O8";
+const SUPABASE_KEY = "sb_publishable_5TyrZwFYdY-AgykyuopXpA_GGKNZ4O";
 
 const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
@@ -19,45 +15,25 @@ const supabaseClient = window.supabase.createClient(
 
 
 /* =========================================================
+   STORAGE CONFIG
+   ========================================================= */
+
+const AVATAR_BUCKET = "gstier-avatars";
+const SKIN_BUCKET = "gstier-skins";
+
+
+/* =========================================================
    CONFIG
    ========================================================= */
 
 const MODES = [
-    {
-        key: "sword",
-        name: "Sword",
-        icon: "⚔️"
-    },
-    {
-        key: "cpvp",
-        name: "CPvP",
-        icon: "💥"
-    },
-    {
-        key: "uhc",
-        name: "UHC",
-        icon: "❤️"
-    },
-    {
-        key: "mace",
-        name: "Mace",
-        icon: "🔨"
-    },
-    {
-        key: "netherpot",
-        name: "NetherPot",
-        icon: "🧪"
-    },
-    {
-        key: "smp",
-        name: "SMP",
-        icon: "🌍"
-    },
-    {
-        key: "axe",
-        name: "Axe",
-        icon: "🪓"
-    }
+    { key: "sword", name: "Sword", icon: "⚔️" },
+    { key: "cpvp", name: "CPvP", icon: "💥" },
+    { key: "uhc", name: "UHC", icon: "❤️" },
+    { key: "mace", name: "Mace", icon: "🔨" },
+    { key: "netherpot", name: "NetherPot", icon: "🧪" },
+    { key: "smp", name: "SMP", icon: "🌍" },
+    { key: "axe", name: "Axe", icon: "🪓" }
 ];
 
 const TIERS = [
@@ -112,6 +88,7 @@ function normalize(value) {
 
 
 function getTierPoints(tier) {
+
     if (!tier) return 0;
 
     const found = TIERS.find(
@@ -125,13 +102,23 @@ function getTierPoints(tier) {
 
 
 function calculateTotal(player) {
-    return MODES.reduce((total, mode) => {
-        return total + getTierPoints(player[mode.key]);
-    }, 0);
+
+    return MODES.reduce(
+        (total, mode) => {
+
+            return total +
+                getTierPoints(
+                    player[mode.key]
+                );
+
+        },
+        0
+    );
 }
 
 
 function getOverallTier(points) {
+
     if (points >= 650) return "HT1";
     if (points >= 590) return "LT1";
     if (points >= 520) return "HT2";
@@ -166,7 +153,9 @@ function getAvatar(player) {
 
     return (
         "https://mc-heads.net/avatar/" +
-        encodeURIComponent(player.name || "Steve") +
+        encodeURIComponent(
+            player.name || "Steve"
+        ) +
         "/100"
     );
 }
@@ -184,7 +173,9 @@ function getSkin(player) {
 
     return (
         "https://mc-heads.net/body/" +
-        encodeURIComponent(player.name || "Steve") +
+        encodeURIComponent(
+            player.name || "Steve"
+        ) +
         "/300"
     );
 }
@@ -196,13 +187,11 @@ function getSkin(player) {
 
 function hideAllScreens() {
 
-    const screens = [
+    [
         "rankingPage",
         "profilePage",
         "adminPage"
-    ];
-
-    screens.forEach(id => {
+    ].forEach(id => {
 
         const element = $(id);
 
@@ -237,16 +226,15 @@ function showScreen(id) {
 
 function goHome() {
 
+    closeProfile();
+
     showScreen("rankingPage");
 
-    currentPlayer = null;
-
-    const navItems =
-        document.querySelectorAll(".nav-item");
-
-    navItems.forEach(item => {
-        item.classList.remove("active");
-    });
+    document
+        .querySelectorAll(".nav-item")
+        .forEach(item => {
+            item.classList.remove("active");
+        });
 
     const rankingButton =
         document.querySelector(
@@ -265,7 +253,8 @@ function goHome() {
 
 async function loadPlayers() {
 
-    const list = $("rankingList");
+    const list =
+        $("rankingList");
 
     if (list) {
 
@@ -280,9 +269,10 @@ async function loadPlayers() {
     const {
         data,
         error
-    } = await supabaseClient
-        .from("players")
-        .select("*");
+    } =
+        await supabaseClient
+            .from("players")
+            .select("*");
 
 
     if (error) {
@@ -299,7 +289,9 @@ async function loadPlayers() {
                     Không thể tải danh sách player.
                     <br>
                     <small>
-                        ${escapeHtml(error.message)}
+                        ${escapeHtml(
+                            error.message
+                        )}
                     </small>
                 </div>
             `;
@@ -323,27 +315,25 @@ async function loadPlayers() {
 
 function updatePlayerCount() {
 
-    const count =
-        players.length;
-
-    const countElement =
+    const element =
         $("adminPlayerCount");
 
-    if (countElement) {
+    if (element) {
 
-        countElement.textContent =
-            `${count} Player`;
+        element.textContent =
+            `${players.length} Player`;
     }
 }
 
 
 /* =========================================================
-   FILTER PLAYERS
+   FILTER
    ========================================================= */
 
 function getFilteredPlayers() {
 
-    let result = [...players];
+    let result =
+        [...players];
 
 
     const searchInput =
@@ -363,30 +353,32 @@ function getFilteredPlayers() {
         result =
             result.filter(player => {
 
-                const name =
-                    normalize(player.name);
-
-                const region =
-                    normalize(player.region);
-
                 return (
-                    name.includes(search) ||
-                    region.includes(search)
+                    normalize(
+                        player.name
+                    ).includes(search) ||
+
+                    normalize(
+                        player.region
+                    ).includes(search)
                 );
+
             });
     }
 
 
     if (currentMode !== "ALL") {
 
+        const key =
+            String(
+                currentMode
+            ).toLowerCase();
+
         result =
-            result.filter(player => {
-
-                const key =
-                    currentMode.toLowerCase();
-
-                return player[key];
-            });
+            result.filter(
+                player =>
+                    player[key]
+            );
     }
 
 
@@ -394,15 +386,19 @@ function getFilteredPlayers() {
 
         if (currentSort === "name") {
 
-            return String(a.name || "")
-                .localeCompare(
-                    String(b.name || ""),
-                    undefined,
-                    {
-                        sensitivity: "base"
-                    }
-                );
+            return String(
+                a.name || ""
+            ).localeCompare(
+                String(
+                    b.name || ""
+                ),
+                undefined,
+                {
+                    sensitivity: "base"
+                }
+            );
         }
+
 
         return (
             calculateTotal(b) -
@@ -447,15 +443,16 @@ function renderRanking() {
         result.map(
             (player, index) => {
 
-                const points =
-                    calculateTotal(player);
-
                 const rank =
                     index + 1;
 
+                const points =
+                    calculateTotal(
+                        player
+                    );
+
 
                 let rankClass = "";
-
 
                 if (rank === 1) {
                     rankClass = "top1";
@@ -471,34 +468,41 @@ function renderRanking() {
 
 
                 const tierHtml =
-                    MODES.map(mode => {
+                    MODES.map(
+                        mode => {
 
-                        const tier =
-                            player[mode.key] || "—";
+                            const tier =
+                                player[
+                                    mode.key
+                                ] || "—";
 
 
-                        return `
-                            <div class="tier-item">
+                            return `
+                                <div class="tier-item">
 
-                                <div class="tier-icon">
-                                    ${mode.icon}
+                                    <div class="tier-icon">
+                                        ${mode.icon}
+                                    </div>
+
+                                    <div class="tier-value">
+                                        ${escapeHtml(
+                                            tier
+                                        )}
+                                    </div>
+
                                 </div>
+                            `;
 
-                                <div class="tier-value">
-                                    ${escapeHtml(tier)}
-                                </div>
-
-                            </div>
-                        `;
-
-                    }).join("");
+                        }
+                    ).join("");
 
 
                 return `
                     <div
                         class="ranking-row ${rankClass}"
-                        data-player-id="${escapeHtml(player.id)}"
-                        onclick="openProfile('${escapeHtml(player.id)}')"
+                        onclick="openProfile('${escapeHtml(
+                            player.id
+                        )}')"
                     >
 
                         <div class="rank-number ${rankClass}">
@@ -510,20 +514,30 @@ function renderRanking() {
 
                             <img
                                 class="avatar"
-                                src="${escapeHtml(getAvatar(player))}"
-                                alt="${escapeHtml(player.name)}"
+                                src="${escapeHtml(
+                                    getAvatar(
+                                        player
+                                    )
+                                )}"
+                                alt="${escapeHtml(
+                                    player.name
+                                )}"
                                 onerror="this.src='https://mc-heads.net/avatar/Steve/100'"
                             >
-
 
                             <div>
 
                                 <div class="player-name">
-                                    ${escapeHtml(player.name)}
+                                    ${escapeHtml(
+                                        player.name
+                                    )}
                                 </div>
 
                                 <div class="player-region">
-                                    ${escapeHtml(player.region || "Unknown")}
+                                    ${escapeHtml(
+                                        player.region ||
+                                        "Unknown"
+                                    )}
                                 </div>
 
                             </div>
@@ -532,7 +546,10 @@ function renderRanking() {
 
 
                         <div class="region-badge">
-                            ${escapeHtml(player.region || "VN")}
+                            ${escapeHtml(
+                                player.region ||
+                                "VN"
+                            )}
                         </div>
 
 
@@ -559,17 +576,13 @@ function renderRanking() {
 
 
 /* =========================================================
-   SEARCH
+   SEARCH / FILTER / SORT
    ========================================================= */
 
 function searchPlayers() {
     renderRanking();
 }
 
-
-/* =========================================================
-   MODE FILTER
-   ========================================================= */
 
 function changeMode(value) {
 
@@ -579,10 +592,6 @@ function changeMode(value) {
     renderRanking();
 }
 
-
-/* =========================================================
-   SORT
-   ========================================================= */
 
 function changeSort(value) {
 
@@ -609,9 +618,7 @@ function openProfile(playerId) {
         );
 
 
-    if (!player) {
-        return;
-    }
+    if (!player) return;
 
 
     currentPlayer =
@@ -632,44 +639,56 @@ function openProfile(playerId) {
 
 
     const total =
-        calculateTotal(player);
+        calculateTotal(
+            player
+        );
 
 
     const overall =
-        getOverallTier(total);
+        getOverallTier(
+            total
+        );
 
 
     const modesHtml =
-        MODES.map(mode => {
+        MODES.map(
+            mode => {
 
-            const tier =
-                player[mode.key] || "—";
+                const tier =
+                    player[
+                        mode.key
+                    ] || "—";
 
 
-            const points =
-                getTierPoints(tier);
+                const points =
+                    getTierPoints(
+                        tier
+                    );
 
 
-            return `
-                <div class="mode-card">
+                return `
+                    <div class="mode-card">
 
-                    <div class="mode-name">
-                        ${mode.icon}
-                        ${mode.name}
+                        <div class="mode-name">
+                            ${mode.icon}
+                            ${mode.name}
+                        </div>
+
+                        <span class="mode-tier">
+                            ${escapeHtml(
+                                tier
+                            )}
+                        </span>
+
+                        <span class="mode-points">
+                            ${points} points
+                        </span>
+
                     </div>
+                `;
 
-                    <span class="mode-tier">
-                        ${escapeHtml(tier)}
-                    </span>
-
-                    <span class="mode-points">
-                        ${points} points
-                    </span>
-
-                </div>
-            `;
-
-        }).join("");
+            }
+        ).join("");
 
 
     content.innerHTML = `
@@ -680,20 +699,31 @@ function openProfile(playerId) {
 
                 <img
                     class="profile-avatar"
-                    src="${escapeHtml(getAvatar(player))}"
-                    alt="${escapeHtml(player.name)}"
+                    src="${escapeHtml(
+                        getAvatar(
+                            player
+                        )
+                    )}"
+                    alt="${escapeHtml(
+                        player.name
+                    )}"
                     onerror="this.src='https://mc-heads.net/avatar/Steve/200'"
                 >
 
 
                 <div class="profile-name">
-                    ${escapeHtml(player.name)}
+                    ${escapeHtml(
+                        player.name
+                    )}
                 </div>
 
 
                 <div class="profile-region">
                     🌎
-                    ${escapeHtml(player.region || "Unknown")}
+                    ${escapeHtml(
+                        player.region ||
+                        "Unknown"
+                    )}
                 </div>
 
 
@@ -723,7 +753,6 @@ function openProfile(playerId) {
                     TIER RANKINGS
                 </h2>
 
-
                 <div class="profile-grid">
                     ${modesHtml}
                 </div>
@@ -736,7 +765,11 @@ function openProfile(playerId) {
                     </h2>
 
                     <img
-                        src="${escapeHtml(getSkin(player))}"
+                        src="${escapeHtml(
+                            getSkin(
+                                player
+                            )
+                        )}"
                         alt="Minecraft skin"
                         onerror="this.style.display='none'"
                     >
@@ -749,13 +782,11 @@ function openProfile(playerId) {
     `;
 
 
-    modal.classList.remove("hidden");
+    modal.classList.remove(
+        "hidden"
+    );
 }
 
-
-/* =========================================================
-   CLOSE PROFILE
-   ========================================================= */
 
 function closeProfile() {
 
@@ -763,10 +794,13 @@ function closeProfile() {
         $("profileModal");
 
     if (modal) {
-        modal.classList.add("hidden");
+        modal.classList.add(
+            "hidden"
+        );
     }
 
-    currentPlayer = null;
+    currentPlayer =
+        null;
 }
 
 
@@ -781,11 +815,15 @@ async function checkAdmin() {
             user
         }
     } =
-        await supabaseClient.auth.getUser();
+        await supabaseClient
+            .auth
+            .getUser();
 
 
     const adminButton =
-        document.querySelector(".admin-only");
+        document.querySelector(
+            ".admin-only"
+        );
 
 
     const loginButton =
@@ -799,15 +837,21 @@ async function checkAdmin() {
     if (!user) {
 
         if (adminButton) {
-            adminButton.classList.add("hidden");
+            adminButton.classList.add(
+                "hidden"
+            );
         }
 
         if (loginButton) {
-            loginButton.classList.remove("hidden");
+            loginButton.classList.remove(
+                "hidden"
+            );
         }
 
         if (logoutButton) {
-            logoutButton.classList.add("hidden");
+            logoutButton.classList.add(
+                "hidden"
+            );
         }
 
         return false;
@@ -821,22 +865,31 @@ async function checkAdmin() {
         await supabaseClient
             .from("admin_users")
             .select("*")
-            .eq("user_id", user.id)
+            .eq(
+                "user_id",
+                user.id
+            )
             .maybeSingle();
 
 
     if (error || !adminData) {
 
         if (adminButton) {
-            adminButton.classList.add("hidden");
+            adminButton.classList.add(
+                "hidden"
+            );
         }
 
         if (loginButton) {
-            loginButton.classList.remove("hidden");
+            loginButton.classList.remove(
+                "hidden"
+            );
         }
 
         if (logoutButton) {
-            logoutButton.classList.add("hidden");
+            logoutButton.classList.add(
+                "hidden"
+            );
         }
 
         return false;
@@ -844,17 +897,21 @@ async function checkAdmin() {
 
 
     if (adminButton) {
-        adminButton.classList.remove("hidden");
+        adminButton.classList.remove(
+            "hidden"
+        );
     }
-
 
     if (loginButton) {
-        loginButton.classList.add("hidden");
+        loginButton.classList.add(
+            "hidden"
+        );
     }
 
-
     if (logoutButton) {
-        logoutButton.classList.remove("hidden");
+        logoutButton.classList.remove(
+            "hidden"
+        );
     }
 
 
@@ -882,16 +939,20 @@ async function openAdminPanel() {
 
     closeProfile();
 
-    showScreen("adminPage");
+    showScreen(
+        "adminPage"
+    );
 
 
-    const navItems =
-        document.querySelectorAll(".nav-item");
-
-
-    navItems.forEach(item => {
-        item.classList.remove("active");
-    });
+    document
+        .querySelectorAll(
+            ".nav-item"
+        )
+        .forEach(item => {
+            item.classList.remove(
+                "active"
+            );
+        });
 
 
     renderAdminList();
@@ -906,7 +967,6 @@ function renderAdminList() {
 
     const list =
         $("adminPlayerList");
-
 
     if (!list) return;
 
@@ -927,89 +987,101 @@ function renderAdminList() {
 
 
     list.innerHTML =
-        players.map(player => {
+        players.map(
+            player => {
 
-            return `
-                <div class="admin-player-row">
+                return `
+                    <div class="admin-player-row">
 
-                    <img
-                        class="avatar"
-                        src="${escapeHtml(getAvatar(player))}"
-                        alt=""
-                        onerror="this.src='https://mc-heads.net/avatar/Steve/70'"
-                    >
+                        <img
+                            class="avatar"
+                            src="${escapeHtml(
+                                getAvatar(
+                                    player
+                                )
+                            )}"
+                            alt=""
+                            onerror="this.src='https://mc-heads.net/avatar/Steve/70'"
+                        >
 
 
-                    <div class="admin-player-info">
+                        <div class="admin-player-info">
 
-                        <strong>
-                            ${escapeHtml(player.name)}
-                        </strong>
+                            <strong>
+                                ${escapeHtml(
+                                    player.name
+                                )}
+                            </strong>
 
-                        <small>
-                            ${escapeHtml(player.region || "VN")}
-                            •
-                            ${calculateTotal(player)}
-                            points
-                        </small>
+                            <small>
+                                ${escapeHtml(
+                                    player.region ||
+                                    "VN"
+                                )}
+                                •
+                                ${calculateTotal(
+                                    player
+                                )}
+                                points
+                            </small>
+
+                        </div>
+
+
+                        <div class="admin-player-actions">
+
+                            <button
+                                type="button"
+                                class="edit-btn"
+                                onclick="editPlayer('${escapeHtml(
+                                    player.id
+                                )}')"
+                            >
+                                ✏️ Sửa
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="delete-btn"
+                                onclick="deletePlayer('${escapeHtml(
+                                    player.id
+                                )}')"
+                            >
+                                🗑️ Xóa
+                            </button>
+
+                        </div>
 
                     </div>
+                `;
 
-
-                    <div class="admin-player-actions">
-
-                        <button
-                            type="button"
-                            class="edit-btn"
-                            onclick="editPlayer('${escapeHtml(player.id)}')"
-                        >
-                            ✏️ Sửa
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="delete-btn"
-                            onclick="deletePlayer('${escapeHtml(player.id)}')"
-                        >
-                            🗑️ Xóa
-                        </button>
-
-                    </div>
-
-                </div>
-            `;
-
-        }).join("");
+            }
+        ).join("");
 }
 
 
 /* =========================================================
-   GET INPUT
+   FORM HELPERS
    ========================================================= */
 
-function getInputValue(ids) {
+function getInputValue(id) {
 
-    for (const id of ids) {
+    const element =
+        $(id);
 
-        const element =
-            $(id);
-
-        if (element) {
-            return element.value.trim();
-        }
-
+    if (!element) {
+        return "";
     }
 
-    return "";
+    return element.value.trim();
 }
 
 
-/* =========================================================
-   SET FORM VALUE
-   ========================================================= */
-
-function setFormValue(id, value) {
+function setFormValue(
+    id,
+    value
+) {
 
     const element =
         $(id);
@@ -1022,12 +1094,13 @@ function setFormValue(id, value) {
 
 
 /* =========================================================
-   RESET PLAYER FORM
+   RESET FORM
    ========================================================= */
 
 function resetPlayerForm() {
 
-    editingPlayerId = null;
+    editingPlayerId =
+        null;
 
 
     const form =
@@ -1055,6 +1128,24 @@ function resetPlayerForm() {
         "playerSkinUrl",
         ""
     );
+
+
+    const avatarFile =
+        $("playerAvatarFile");
+
+
+    const skinFile =
+        $("playerSkinFile");
+
+
+    if (avatarFile) {
+        avatarFile.value = "";
+    }
+
+
+    if (skinFile) {
+        skinFile.value = "";
+    }
 
 
     const title =
@@ -1086,7 +1177,9 @@ function resetPlayerForm() {
    EDIT PLAYER
    ========================================================= */
 
-async function editPlayer(playerId) {
+async function editPlayer(
+    playerId
+) {
 
     const isAdmin =
         await checkAdmin();
@@ -1135,26 +1228,58 @@ async function editPlayer(playerId) {
     );
 
 
+    /*
+       Giữ URL ảnh cũ.
+       Nếu admin không chọn file mới,
+       URL cũ sẽ được giữ nguyên.
+    */
+
     setFormValue(
         "playerAvatarUrl",
-        player.avatar_url || player.avatar || ""
+        player.avatar_url ||
+        player.avatar ||
+        ""
     );
 
 
     setFormValue(
         "playerSkinUrl",
-        player.skin_url || player.skin || ""
+        player.skin_url ||
+        player.skin ||
+        ""
     );
 
 
-    MODES.forEach(mode => {
+    MODES.forEach(
+        mode => {
 
-        setFormValue(
-            `${mode.key}Tier`,
-            player[mode.key] || ""
-        );
+            setFormValue(
+                `${mode.key}Tier`,
+                player[
+                    mode.key
+                ] || ""
+            );
 
-    });
+        }
+    );
+
+
+    const avatarFile =
+        $("playerAvatarFile");
+
+
+    const skinFile =
+        $("playerSkinFile");
+
+
+    if (avatarFile) {
+        avatarFile.value = "";
+    }
+
+
+    if (skinFile) {
+        skinFile.value = "";
+    }
 
 
     const title =
@@ -1182,7 +1307,9 @@ async function editPlayer(playerId) {
     }
 
 
-    showScreen("adminPage");
+    showScreen(
+        "adminPage"
+    );
 
 
     window.scrollTo({
@@ -1193,10 +1320,263 @@ async function editPlayer(playerId) {
 
 
 /* =========================================================
+   STORAGE — FILE VALIDATION
+   ========================================================= */
+
+function validateImageFile(
+    file,
+    type
+) {
+
+    if (!file) {
+        return {
+            valid: true
+        };
+    }
+
+
+    const maxSize =
+        type === "avatar"
+            ? 5 * 1024 * 1024
+            : 2 * 1024 * 1024;
+
+
+    if (file.size > maxSize) {
+
+        return {
+            valid: false,
+            message:
+                type === "avatar"
+                    ? "Avatar không được vượt quá 5MB."
+                    : "Skin không được vượt quá 2MB."
+        };
+    }
+
+
+    if (
+        type === "avatar" &&
+        ![
+            "image/png",
+            "image/jpeg",
+            "image/webp"
+        ].includes(file.type)
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "Avatar chỉ chấp nhận PNG, JPG hoặc WEBP."
+        };
+    }
+
+
+    if (
+        type === "skin" &&
+        file.type !== "image/png"
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "Minecraft Skin phải là file PNG."
+        };
+    }
+
+
+    return {
+        valid: true
+    };
+}
+
+
+/* =========================================================
+   STORAGE — CREATE FILE NAME
+   ========================================================= */
+
+function createStorageFileName(
+    playerId,
+    file
+) {
+
+    const extension =
+        file.name
+            .split(".")
+            .pop()
+            .toLowerCase();
+
+
+    const random =
+        Math.random()
+            .toString(36)
+            .substring(2, 10);
+
+
+    return (
+        playerId +
+        "/" +
+        Date.now() +
+        "-" +
+        random +
+        "." +
+        extension
+    );
+}
+
+
+/* =========================================================
+   STORAGE — UPLOAD
+   ========================================================= */
+
+async function uploadImage(
+    file,
+    bucket,
+    playerId
+) {
+
+    if (!file) {
+        return null;
+    }
+
+
+    const filePath =
+        createStorageFileName(
+            playerId,
+            file
+        );
+
+
+    const {
+        error
+    } =
+        await supabaseClient
+            .storage
+            .from(bucket)
+            .upload(
+                filePath,
+                file,
+                {
+                    cacheControl: "3600",
+                    upsert: false,
+                    contentType:
+                        file.type
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "STORAGE UPLOAD ERROR:",
+            error
+        );
+
+        throw new Error(
+            `Upload ảnh thất bại: ${error.message}`
+        );
+    }
+
+
+    const {
+        data
+    } =
+        supabaseClient
+            .storage
+            .from(bucket)
+            .getPublicUrl(
+                filePath
+            );
+
+
+    if (!data ||
+        !data.publicUrl) {
+
+        throw new Error(
+            "Không lấy được Public URL của ảnh."
+        );
+    }
+
+
+    return {
+        url: data.publicUrl,
+        path: filePath,
+        bucket: bucket
+    };
+}
+
+
+/* =========================================================
+   STORAGE — DELETE OLD FILE
+   ========================================================= */
+
+async function deleteStorageFile(
+    url,
+    bucket
+) {
+
+    if (!url) {
+        return;
+    }
+
+
+    /*
+       Chỉ xóa file thuộc
+       Supabase Storage của project này.
+    */
+
+    if (
+        !url.includes(
+            `${SUPABASE_URL}/storage/v1/object/public/${bucket}/`
+        )
+    ) {
+        return;
+    }
+
+
+    const prefix =
+        `${SUPABASE_URL}/storage/v1/object/public/${bucket}/`;
+
+
+    const path =
+        decodeURIComponent(
+            url.substring(
+                prefix.length
+            )
+        );
+
+
+    if (!path) {
+        return;
+    }
+
+
+    const {
+        error
+    } =
+        await supabaseClient
+            .storage
+            .from(bucket)
+            .remove([
+                path
+            ]);
+
+
+    if (error) {
+
+        console.warn(
+            "Không thể xóa ảnh cũ:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
    SAVE PLAYER
    ========================================================= */
 
-async function savePlayer(event) {
+async function savePlayer(
+    event
+) {
 
     if (event) {
         event.preventDefault();
@@ -1222,10 +1602,6 @@ async function savePlayer(event) {
         $("playerName");
 
 
-    const regionElement =
-        $("playerRegion");
-
-
     if (!nameElement) {
         return;
     }
@@ -1236,9 +1612,9 @@ async function savePlayer(event) {
 
 
     const region =
-        regionElement
-            ? regionElement.value.trim()
-            : "VN";
+        getInputValue(
+            "playerRegion"
+        ) || "VN";
 
 
     if (!name) {
@@ -1252,77 +1628,31 @@ async function savePlayer(event) {
     }
 
 
-    const playerData = {
-
-        name: name,
-
-        region:
-            region || "VN",
-
-        avatar_url:
-            getInputValue([
-                "playerAvatarUrl"
-            ]) || null,
-
-        skin_url:
-            getInputValue([
-                "playerSkinUrl"
-            ]) || null
-    };
+    const avatarFile =
+        $("playerAvatarFile")
+            ?.files?.[0] || null;
 
 
-    MODES.forEach(mode => {
-
-        playerData[mode.key] =
-            getInputValue([
-                `${mode.key}Tier`
-            ]) || null;
-
-    });
+    const skinFile =
+        $("playerSkinFile")
+            ?.files?.[0] || null;
 
 
-    playerData.total_points =
-        calculateTotal(playerData);
+    /*
+       Validate file
+    */
 
-
-    let result;
-
-
-    if (editingPlayerId) {
-
-        result =
-            await supabaseClient
-                .from("players")
-                .update(playerData)
-                .eq(
-                    "id",
-                    editingPlayerId
-                )
-                .select()
-                .single();
-
-    } else {
-
-        result =
-            await supabaseClient
-                .from("players")
-                .insert(playerData)
-                .select()
-                .single();
-    }
-
-
-    if (result.error) {
-
-        console.error(
-            "SAVE ERROR:",
-            result.error
+    const avatarValidation =
+        validateImageFile(
+            avatarFile,
+            "avatar"
         );
 
 
+    if (!avatarValidation.valid) {
+
         showFormMessage(
-            "Lưu thất bại: " +
-            result.error.message,
+            avatarValidation.message,
             true
         );
 
@@ -1330,60 +1660,341 @@ async function savePlayer(event) {
     }
 
 
-    const wasEditing =
-        Boolean(editingPlayerId);
+    const skinValidation =
+        validateImageFile(
+            skinFile,
+            "skin"
+        );
+
+
+    if (!skinValidation.valid) {
+
+        showFormMessage(
+            skinValidation.message,
+            true
+        );
+
+        return;
+    }
+
+
+    /*
+       Tìm player cũ nếu đang EDIT
+    */
+
+    let oldPlayer = null;
+
+
+    if (editingPlayerId) {
+
+        oldPlayer =
+            players.find(
+                player =>
+                    String(
+                        player.id
+                    ) ===
+                    String(
+                        editingPlayerId
+                    )
+            );
+    }
+
+
+    /*
+       ID dùng cho Storage.
+       Nếu thêm mới chưa có UUID,
+       tạo UUID trước.
+    */
+
+    let playerId =
+        editingPlayerId;
+
+
+    if (!playerId) {
+
+        playerId =
+            crypto.randomUUID();
+    }
 
 
     showFormMessage(
-        wasEditing
-            ? "✅ Đã cập nhật player!"
-            : "✅ Đã thêm player!",
+        "⏳ Đang chuẩn bị lưu...",
         false
     );
 
 
-    editingPlayerId = null;
+    try {
+
+        /*
+           Avatar
+        */
+
+        let avatarUrl =
+            oldPlayer?.avatar_url ||
+            oldPlayer?.avatar ||
+            getInputValue(
+                "playerAvatarUrl"
+            ) ||
+            null;
 
 
-    await loadPlayers();
+        let newAvatar =
+            null;
 
 
-    resetPlayerForm();
+        if (avatarFile) {
+
+            showFormMessage(
+                "⏳ Đang upload Avatar...",
+                false
+            );
 
 
-    showFormMessage(
-        wasEditing
-            ? "✅ Đã cập nhật player!"
-            : "✅ Đã thêm player!",
-        false
-    );
-}
+            newAvatar =
+                await uploadImage(
+                    avatarFile,
+                    AVATAR_BUCKET,
+                    playerId
+                );
 
 
-/* =========================================================
-   FORM MESSAGE
-   ========================================================= */
-
-function showFormMessage(
-    message,
-    isError
-) {
-
-    const element =
-        $("formMessage");
+            avatarUrl =
+                newAvatar.url;
+        }
 
 
-    if (!element) return;
+        /*
+           Skin
+        */
+
+        let skinUrl =
+            oldPlayer?.skin_url ||
+            oldPlayer?.skin ||
+            getInputValue(
+                "playerSkinUrl"
+            ) ||
+            null;
 
 
-    element.textContent =
-        message;
+        let newSkin =
+            null;
 
 
-    element.className =
-        isError
-            ? "form-message error"
-            : "form-message success";
+        if (skinFile) {
+
+            showFormMessage(
+                "⏳ Đang upload Skin...",
+                false
+            );
+
+
+            newSkin =
+                await uploadImage(
+                    skinFile,
+                    SKIN_BUCKET,
+                    playerId
+                );
+
+
+            skinUrl =
+                newSkin.url;
+        }
+
+
+        /*
+           Player data
+        */
+
+        const playerData = {
+
+            id: playerId,
+
+            name: name,
+
+            region: region,
+
+            avatar_url:
+                avatarUrl,
+
+            skin_url:
+                skinUrl
+        };
+
+
+        MODES.forEach(
+            mode => {
+
+                playerData[
+                    mode.key
+                ] =
+                    getInputValue(
+                        `${mode.key}Tier`
+                    ) || null;
+
+            }
+        );
+
+
+        playerData.total_points =
+            calculateTotal(
+                playerData
+            );
+
+
+        showFormMessage(
+            "⏳ Đang lưu player...",
+            false
+        );
+
+
+        let result;
+
+
+        if (editingPlayerId) {
+
+            /*
+               UPDATE
+            */
+
+            result =
+                await supabaseClient
+                    .from("players")
+                    .update(
+                        playerData
+                    )
+                    .eq(
+                        "id",
+                        editingPlayerId
+                    )
+                    .select()
+                    .single();
+
+        } else {
+
+            /*
+               INSERT
+            */
+
+            result =
+                await supabaseClient
+                    .from("players")
+                    .insert(
+                        playerData
+                    )
+                    .select()
+                    .single();
+        }
+
+
+        /*
+           Database error
+        */
+
+        if (result.error) {
+
+            /*
+               Nếu DB lỗi sau khi upload,
+               xóa ảnh mới để tránh file rác.
+            */
+
+            if (newAvatar) {
+
+                await supabaseClient
+                    .storage
+                    .from(
+                        AVATAR_BUCKET
+                    )
+                    .remove([
+                        newAvatar.path
+                    ]);
+            }
+
+
+            if (newSkin) {
+
+                await supabaseClient
+                    .storage
+                    .from(
+                        SKIN_BUCKET
+                    )
+                    .remove([
+                        newSkin.path
+                    ]);
+            }
+
+
+            throw new Error(
+                result.error.message
+            );
+        }
+
+
+        /*
+           Nếu upload ảnh mới thành công,
+           xóa ảnh cũ.
+        */
+
+        if (
+            newAvatar &&
+            oldPlayer?.avatar_url
+        ) {
+
+            await deleteStorageFile(
+                oldPlayer.avatar_url,
+                AVATAR_BUCKET
+            );
+        }
+
+
+        if (
+            newSkin &&
+            oldPlayer?.skin_url
+        ) {
+
+            await deleteStorageFile(
+                oldPlayer.skin_url,
+                SKIN_BUCKET
+            );
+        }
+
+
+        const wasEditing =
+            Boolean(
+                editingPlayerId
+            );
+
+
+        editingPlayerId =
+            null;
+
+
+        await loadPlayers();
+
+
+        resetPlayerForm();
+
+
+        showFormMessage(
+            wasEditing
+                ? "✅ Đã cập nhật player và ảnh!"
+                : "✅ Đã thêm player và upload ảnh!",
+            false
+        );
+
+    } catch (error) {
+
+        console.error(
+            "SAVE PLAYER ERROR:",
+            error
+        );
+
+
+        showFormMessage(
+            "❌ " +
+            error.message,
+            true
+        );
+    }
 }
 
 
@@ -1391,7 +2002,9 @@ function showFormMessage(
    DELETE PLAYER
    ========================================================= */
 
-async function deletePlayer(playerId) {
+async function deletePlayer(
+    playerId
+) {
 
     const isAdmin =
         await checkAdmin();
@@ -1460,10 +2073,36 @@ async function deletePlayer(playerId) {
     }
 
 
+    /*
+       Xóa Avatar và Skin
+       trong Storage.
+    */
+
+    if (player.avatar_url) {
+
+        await deleteStorageFile(
+            player.avatar_url,
+            AVATAR_BUCKET
+        );
+    }
+
+
+    if (player.skin_url) {
+
+        await deleteStorageFile(
+            player.skin_url,
+            SKIN_BUCKET
+        );
+    }
+
+
     if (
-        String(currentPlayer?.id) ===
+        String(
+            currentPlayer?.id
+        ) ===
         String(playerId)
     ) {
+
         closeProfile();
     }
 
@@ -1478,6 +2117,35 @@ async function deletePlayer(playerId) {
 
 
 /* =========================================================
+   FORM MESSAGE
+   ========================================================= */
+
+function showFormMessage(
+    message,
+    isError
+) {
+
+    const element =
+        $("formMessage");
+
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        message;
+
+
+    element.className =
+        isError
+            ? "form-message error"
+            : "form-message success";
+}
+
+
+/* =========================================================
    LOGIN
    ========================================================= */
 
@@ -1486,9 +2154,10 @@ function openLogin() {
     const modal =
         $("loginModal");
 
-
     if (modal) {
-        modal.classList.remove("hidden");
+        modal.classList.remove(
+            "hidden"
+        );
     }
 }
 
@@ -1498,18 +2167,19 @@ function closeLogin() {
     const modal =
         $("loginModal");
 
-
     if (modal) {
-        modal.classList.add("hidden");
+        modal.classList.add(
+            "hidden"
+        );
     }
 
 
     const message =
         $("loginMessage");
 
-
     if (message) {
-        message.textContent = "";
+        message.textContent =
+            "";
     }
 }
 
@@ -1518,35 +2188,24 @@ function closeLogin() {
    LOGIN ADMIN
    ========================================================= */
 
-async function loginAdmin(event) {
+async function loginAdmin(
+    event
+) {
 
     if (event) {
         event.preventDefault();
     }
 
 
-    const emailElement =
-        $("loginEmail");
-
-
-    const passwordElement =
-        $("loginPassword");
-
-
-    if (
-        !emailElement ||
-        !passwordElement
-    ) {
-        return;
-    }
-
-
     const email =
-        emailElement.value.trim();
+        getInputValue(
+            "loginEmail"
+        );
 
 
     const password =
-        passwordElement.value;
+        $("loginPassword")
+            ?.value || "";
 
 
     const message =
@@ -1562,7 +2221,8 @@ async function loginAdmin(event) {
     const {
         error
     } =
-        await supabaseClient.auth
+        await supabaseClient
+            .auth
             .signInWithPassword({
                 email,
                 password
@@ -1594,7 +2254,9 @@ async function loginAdmin(event) {
 
     if (!isAdmin) {
 
-        await supabaseClient.auth.signOut();
+        await supabaseClient
+            .auth
+            .signOut();
 
 
         if (message) {
@@ -1607,18 +2269,9 @@ async function loginAdmin(event) {
     }
 
 
-    if (message) {
-
-        message.textContent =
-            "✅ Đăng nhập thành công!";
-    }
-
-
     closeLogin();
 
-
     await loadPlayers();
-
 
     openAdminPanel();
 }
@@ -1630,11 +2283,12 @@ async function loginAdmin(event) {
 
 async function logoutAdmin() {
 
-    await supabaseClient.auth.signOut();
+    await supabaseClient
+        .auth
+        .signOut();
 
 
     await checkAdmin();
-
 
     goHome();
 
@@ -1651,12 +2305,8 @@ async function logoutAdmin() {
 
 function setupEvents() {
 
-
-    /* SEARCH */
-
     const search =
         $("searchInput");
-
 
     if (search) {
 
@@ -1667,49 +2317,44 @@ function setupEvents() {
     }
 
 
-    /* MODE */
-
     const mode =
         $("modeFilter");
-
 
     if (mode) {
 
         mode.addEventListener(
             "change",
             event => {
+
                 changeMode(
                     event.target.value
                 );
+
             }
         );
     }
 
 
-    /* SORT */
-
     const sort =
         $("sortFilter");
-
 
     if (sort) {
 
         sort.addEventListener(
             "change",
             event => {
+
                 changeSort(
                     event.target.value
                 );
+
             }
         );
     }
 
 
-    /* LOGIN */
-
     const loginForm =
         $("loginForm");
-
 
     if (loginForm) {
 
@@ -1720,11 +2365,8 @@ function setupEvents() {
     }
 
 
-    /* PLAYER FORM */
-
     const playerForm =
         $("playerForm");
-
 
     if (playerForm) {
 
@@ -1735,11 +2377,8 @@ function setupEvents() {
     }
 
 
-    /* PROFILE MODAL CLICK OUTSIDE */
-
     const profileModal =
         $("profileModal");
-
 
     if (profileModal) {
 
@@ -1751,6 +2390,7 @@ function setupEvents() {
                     event.target ===
                     profileModal
                 ) {
+
                     closeProfile();
                 }
 
@@ -1758,8 +2398,6 @@ function setupEvents() {
         );
     }
 
-
-    /* LOGIN MODAL OVERLAY */
 
     const loginOverlay =
         document.querySelector(
@@ -1774,7 +2412,6 @@ function setupEvents() {
             closeLogin
         );
     }
-
 }
 
 
@@ -1787,7 +2424,9 @@ supabaseClient.auth.onAuthStateChange(
 
         setTimeout(
             async () => {
+
                 await checkAdmin();
+
             },
             0
         );
